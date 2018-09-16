@@ -1,0 +1,7 @@
+/lib/*
+/bin/*
+build**/
+*.pro.user
+*.pro.user.*
+*.txt.user
+*.txt.user.*
