@@ -51,6 +51,7 @@ target_link_libraries(${PROJECT_NAME}
 add_definitions(
 	-DGLEW_STATIC
 	-DGLM_SWIZZLE
+	-DNOMINMAX
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

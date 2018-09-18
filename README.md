@@ -12,9 +12,7 @@ frequent API breaking changes until it becomes more feature complete.
 The library needs the "dep_src" repository contents to compile. Set the
 DEP_SRC_DIRECTORY cmake option or clone the two repos next to each other.
 
-The cmake scripts currently assume a QtCreator MinGW32 environment. You will
-need to tweak these scripts if you want an other configuration (or wait until
-I get to it).
+The build scripts are tested under QtCreator/MinGW32 and VS2017/MSVC14.
 
 ## Contributions
 

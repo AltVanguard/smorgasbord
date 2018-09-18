@@ -488,9 +488,9 @@ void Smorgasbord::GL4Texture::SetTextureFilter(
 	}
 	
 	//glActiveTexture(GL_TEXTURE0 + bindSlot);
-	glTexParameterf(
+	glTexParameteri(
 		GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GetSamplerFilter(minify));
-	glTexParameterf(
+	glTexParameteri(
 		GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GetSamplerFilter(magnify));
 }
 
@@ -963,12 +963,12 @@ void GL4GraphicsShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	GLint sourceLength = -1;
 	glGetShaderiv(sourceID, GL_SHADER_SOURCE_LENGTH, &sourceLength);
 	
-	char source[sourceLength];
+	vector<char> source(sourceLength);
 	GLsizei actualSourceLength;
 	glGetShaderSource(
-		sourceID, sourceLength, &actualSourceLength, source);
+		sourceID, sourceLength, &actualSourceLength, source.data());
 	errorLog << "SOURCE LISTING Retrieved source:\n";
-	errorLog << source << endl;
+	errorLog << source.data() << endl;
 	errorLog << "SOURCE LISTING END\n\n";
 
 	

@@ -73,7 +73,7 @@ unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
 		{
 			stream >> value.x >> value.y;
 			value.y = 1.0f - value.y; // flip y (obj -> opengl)
-			mesh.t.push_back(value.xy());
+			mesh.t.push_back(vec2(value.x, value.y));
 		}
 		else if (type == "f") // face
 		{

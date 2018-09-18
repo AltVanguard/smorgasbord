@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <string>
 
 using namespace std;
 using namespace glm;

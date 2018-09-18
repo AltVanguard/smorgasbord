@@ -7,9 +7,6 @@ set(DEP_SRC_DIRECTORY
 	CACHE STRING "Path to the dep_src package")
 
 add_subdirectory(
-	"${DEP_SRC_DIRECTORY}/glm-0.9.7.6"
-	"${CMAKE_CURRENT_BINARY_DIR}/glm")
-add_subdirectory(
 	"${DEP_SRC_DIRECTORY}/fmt-4.1.0"
 	${CMAKE_CURRENT_BINARY_DIR}/fmt)
 add_subdirectory(
@@ -18,14 +15,13 @@ add_subdirectory(
 add_subdirectory(
 	"${DEP_SRC_DIRECTORY}/lodepng"
 	${CMAKE_CURRENT_BINARY_DIR}/lodepng)
-
 option(SDL_SHARED "" OFF)
 option(SDL_STATIC "" ON)
 option(DIRECTX "" OFF)
 option(RENDER_D3D "" OFF)
 option(VIDEO_OPENGLES "SDL2 VIDEO_OPENGLES" OFF)
 add_subdirectory(
-	"${DEP_SRC_DIRECTORY}/SDL2-2.0.4"
+	"${DEP_SRC_DIRECTORY}/SDL2"
 	${CMAKE_CURRENT_BINARY_DIR}/SDL2)
 
 project(smorgasbord)
@@ -67,10 +63,15 @@ add_library(${PROJECT_NAME} STATIC
 find_package(OpenGL REQUIRED)
 #find_package(Vulkan REQUIRED)
 
+if (MINGW)
+	set(PLATFORM_LIBRARIES "-lmingw32")
+endif()
+
 target_link_libraries(${PROJECT_NAME}
+	PUBLIC ${PLATFORM_LIBRARIES}
 	PUBLIC lodepng
 	PUBLIC fmt
-	PUBLIC -lmingw32 SDL2main SDL2-static
+	PUBLIC SDL2main SDL2-static
 	PUBLIC GLEW
 	PUBLIC ${OPENGL_LIBRARIES}
 #	PUBLIC ${Vulkan_LIBRARIES}
@@ -80,9 +81,9 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC "src/"
 	PUBLIC "${DEP_SRC_DIRECTORY}/fmt-4.1.0"
 	PUBLIC "${DEP_SRC_DIRECTORY}/glew-2.0.0/include"
-	PUBLIC "${DEP_SRC_DIRECTORY}/glm-0.9.7.6"
+	PUBLIC "${DEP_SRC_DIRECTORY}/glm"
 	PUBLIC "${DEP_SRC_DIRECTORY}/lodepng"
-	PUBLIC "${DEP_SRC_DIRECTORY}/SDL2-2.0.4/include"
+	PUBLIC "${DEP_SRC_DIRECTORY}/SDL2/include"
 	PRIVATE ${SDL_INCLUDE_DIR}
 #	PRIVATE ${Vulkan_INCLUDE_DIRS}
 )
@@ -90,6 +91,7 @@ target_include_directories(${PROJECT_NAME}
 add_definitions(
 	-DGLEW_STATIC
 	-DGLM_SWIZZLE
+	-DNOMINMAX
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
