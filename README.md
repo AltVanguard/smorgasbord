@@ -1,4 +1,3 @@
-
 # Smorgasbord rendering library (Version NaN)
 
 Smorgasbord is a real-time rendering library aiming to aid experimentation
@@ -27,4 +26,5 @@ OK with that.
 ## License
 
 Copyright 2018 Gábor Könyvesi
+
 See the LICENSE file for licensing terms
