@@ -39,25 +39,10 @@ file(GLOB_RECURSE SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
 )
 
-set(WORKING_DIRECTORY_FILES
-)
-
-set(CONFIGURE_FILES
-)
-
-set_source_files_properties(
-	${WORKING_DIRECTORY_FILES}
-	${CONFIGURE_FILES}
-	PROPERTIES
-	HEADER_FILE_ONLY TRUE
-)
-
 add_library(${PROJECT_NAME} STATIC
 	${PUBLIC_HEADERS}
 	${PRIVATE_HEADERS}
 	${SOURCES}
-	${WORKING_DIRECTORY_FILES}
-	${CONFIGURE_FILES}
 )
 
 find_package(OpenGL REQUIRED)
@@ -68,13 +53,14 @@ if (MINGW)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-	PUBLIC ${PLATFORM_LIBRARIES}
-	PUBLIC lodepng
-	PUBLIC fmt
-	PUBLIC SDL2main SDL2-static
-	PUBLIC GLEW
-	PUBLIC ${OPENGL_LIBRARIES}
-#	PUBLIC ${Vulkan_LIBRARIES}
+	PUBLIC
+		${PLATFORM_LIBRARIES}
+		lodepng
+		fmt
+		SDL2main SDL2-static
+		GLEW
+		${OPENGL_LIBRARIES}
+#		${Vulkan_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -88,31 +74,13 @@ target_include_directories(${PROJECT_NAME}
 #	PRIVATE ${Vulkan_INCLUDE_DIRS}
 )
 
-add_definitions(
-	-DGLEW_STATIC
-	-DGLM_SWIZZLE
-	-DNOMINMAX
+target_compile_definitions(${PROJECT_NAME}
+	PUBLIC
+		GLEW_STATIC
+		GLM_SWIZZLE
+		NOMINMAX # windows.h interferes with GLM under MSVC if not defined
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	DEBUG_POSTFIX _d
-)
-
-foreach (_CONFIGURE_FILE ${CONFIGURE_FILES})
-	# use COPYONLY to disable or @ONLY to limit variable substitution in the
-	# configured file
-	configure_file(${_CONFIGURE_FILE} . COPYONLY)
-endforeach()
-
-source_group(headers FILES
-	${PUBLIC_HEADERS}
-	${PRIVATE_HEADERS}
-)
-
-source_group(sources FILES
-	${SOURCES}
-)
-
-source_group(data FILES
-	${CONFIGURE_FILES}
 )
