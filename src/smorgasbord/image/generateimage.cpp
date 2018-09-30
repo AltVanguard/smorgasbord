@@ -1,5 +1,7 @@
 #include "generateimage.hpp"
 
+#include "image.hpp"
+
 #include <random>
 
 using namespace std;

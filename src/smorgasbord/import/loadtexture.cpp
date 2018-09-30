@@ -1,9 +1,11 @@
 #include "loadtexture.hpp"
 
-#include <smorgasbord/util/log.hpp>
+#include <smorgasbord/gpu/gpuapi.hpp>
+#include <smorgasbord/image/image.hpp>
 #include <smorgasbord/import/loadimage.hpp>
+#include <smorgasbord/util/log.hpp>
 
-shared_ptr<Smorgasbord::Texture> Smorgasbord::LoadTextureImage(
+shared_ptr<Smorgasbord::Texture> Smorgasbord::LoadTexture(
 	shared_ptr<Device> device, string filename)
 {
 	shared_ptr<Image> img = LoadImage(filename);

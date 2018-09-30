@@ -1,8 +1,52 @@
-#include "graphics.hpp"
+#include "gpuapi.hpp"
+
+#include <smorgasbord/image/image.hpp>
+#include <smorgasbord/util/log.hpp>
 
 #include <map>
 
 using namespace Smorgasbord;
+
+RasterizationStageFlag Smorgasbord::ParseShaderStageFlags(
+	string stageFlagsString)
+{
+	RasterizationStageFlag stageFlags = RasterizationStageFlag::None;
+	
+	const size_t numChars = stageFlagsString.length();
+	for (size_t i = 0; i < numChars; i++)
+	{
+		switch (stageFlagsString[i])
+		{
+		case 'a':
+			return RasterizationStageFlag::All;
+		case 'v':
+			stageFlags = stageFlags | RasterizationStageFlag::Vertex;
+			break;
+		case 'c': // for Control
+		case 'd': // for Domain
+			stageFlags =
+					stageFlags | RasterizationStageFlag::TesselationControl;
+			break;
+		case 'e': // for Evaluation
+		case 'h': // for Hull
+			stageFlags = stageFlags
+					| RasterizationStageFlag::TesselationEvaluation;
+			break;
+		case 'g':
+			stageFlags = stageFlags | RasterizationStageFlag::Geometry;
+			break;
+		case 'f':
+			stageFlags = stageFlags | RasterizationStageFlag::Fragment;
+			break;
+			
+		default:
+			LogE("Not recognised stage flag");
+			return RasterizationStageFlag::None;
+		}
+	}
+	
+	return stageFlags;
+}
 
 inline map<string, VariableType> InitShaderVariableTypes()
 {
@@ -22,6 +66,7 @@ inline map<string, VariableType> InitShaderVariableTypes()
 	types.emplace("mat2", VariableType(VariableBaseType::Matrix, 2, 2));
 	types.emplace("mat3x4", VariableType(VariableBaseType::Matrix, 3, 4));
 	types.emplace("mat4", VariableType(VariableBaseType::Matrix, 4, 4));
+	// TODO
 	return types;
 }
 
@@ -130,17 +175,17 @@ Smorgasbord::Texture::Texture(uvec2 _imageSize, TextureFormat _textureFormat)
 	: size(_imageSize), format(_textureFormat)
 { }
 
-const map<string, VariableType> &GraphicsShader::GetVariableTypes()
+const map<string, VariableType> &RasterizationShader::GetVariableTypes()
 {
 	static map<string, VariableType> types = InitShaderVariableTypes();
 	return types;
 }
 
-GraphicsShader::GraphicsShader(string _name)
+RasterizationShader::RasterizationShader(string _name)
 	: name(_name)
 { }
 
-void Smorgasbord::GraphicsShader::SetSource(
+void Smorgasbord::RasterizationShader::SetSource(
 	Smorgasbord::ResourceReference source)
 {
 	sources.clear();
@@ -153,20 +198,21 @@ void Smorgasbord::GraphicsShader::SetSource(
 	
 	// Extract stages
 	
-	static map<string, ShaderStage> stageTypes;
+	static map<string, RasterizationStage> stageTypes;
 	if (stageTypes.size() == 0)
 	{
-		stageTypes["vertex"] = ShaderStage::Vertex;
-		stageTypes["tesselation_control"] = ShaderStage::TesselationControl;
-		stageTypes["control"] = ShaderStage::TesselationControl;
-		stageTypes["domain"] = ShaderStage::TesselationControl;
+		stageTypes["vertex"] = RasterizationStage::Vertex;
+		stageTypes["tesselation_control"] =
+			RasterizationStage::TesselationControl;
+		stageTypes["control"] = RasterizationStage::TesselationControl;
+		stageTypes["domain"] = RasterizationStage::TesselationControl;
 		stageTypes["tesselation_evaluation"] =
-			ShaderStage::TesselationEvaluation;
+			RasterizationStage::TesselationEvaluation;
 		stageTypes["evaluation"] =
-			ShaderStage::TesselationEvaluation;
-		stageTypes["hull"] = ShaderStage::TesselationEvaluation;
-		stageTypes["geometry"] = ShaderStage::Geometry;
-		stageTypes["fragment"] = ShaderStage::Fragment;
+			RasterizationStage::TesselationEvaluation;
+		stageTypes["hull"] = RasterizationStage::TesselationEvaluation;
+		stageTypes["geometry"] = RasterizationStage::Geometry;
+		stageTypes["fragment"] = RasterizationStage::Fragment;
 	}
 	
 	const string stageDirective = "##stage";
@@ -196,7 +242,7 @@ void Smorgasbord::GraphicsShader::SetSource(
 	/// The content of the upcoming input interface block
 	string outputBlock;
 	
-	map<ShaderStage, stringstream> stageStreams;
+	map<RasterizationStage, stringstream> stageStreams;
 	bool hadAnyStages = false;
 	while (true)
 	{
@@ -240,7 +286,7 @@ void Smorgasbord::GraphicsShader::SetSource(
 			return;
 		}
 		
-		ShaderStage stageType = foundStageType->second;
+		RasterizationStage stageType = foundStageType->second;
 		
 		segmentEndPos = mainSource.find(
 			stageDirective, segmentStartPos + stageDirectiveLength);
@@ -258,7 +304,7 @@ void Smorgasbord::GraphicsShader::SetSource(
 		{
 			stageSource << "\n""in " << outputBlockName << " {"
 				<< outputBlock << "} "
-				<< (stageType == ShaderStage::Geometry ? "a[]" : "a")
+				<< (stageType == RasterizationStage::Geometry ? "a[]" : "a")
 				<< ";";
 		}
 		
@@ -295,7 +341,7 @@ void Smorgasbord::GraphicsShader::SetSource(
 			
 			stageSource << "\n""out " << outputBlockName << " {"
 				<< outputBlock << "} "
-				<< (stageType == ShaderStage::Geometry ? "o[]" : "o")
+				<< (stageType == RasterizationStage::Geometry ? "o[]" : "o")
 				<< ";";
 			
 			stageSource << mainSource.substr(
@@ -310,9 +356,9 @@ void Smorgasbord::GraphicsShader::SetSource(
 		}
 	}
 	
-	for (uint32_t i = 0; i < (uint32_t)ShaderStage::Num; i++)
+	for (uint32_t i = 0; i < (uint32_t)RasterizationStage::Num; i++)
 	{
-		ShaderStage stageType = (ShaderStage)i;
+		RasterizationStage stageType = (RasterizationStage)i;
 		auto result = stageStreams.find(stageType);
 		if (result != stageStreams.end())
 		{
@@ -321,14 +367,14 @@ void Smorgasbord::GraphicsShader::SetSource(
 	}
 }
 
-void Smorgasbord::GraphicsShader::AddText(
-	Smorgasbord::ShaderStageFlag stageFlags,
+void Smorgasbord::RasterizationShader::AddText(
+	Smorgasbord::RasterizationStageFlag stageFlags,
 	const string &text)
 {
 	// TODO
 }
 
-string GraphicsShader::FilterComments(string text)
+string RasterizationShader::FilterComments(string text)
 {
 	string filteredText = text;
 	
@@ -365,7 +411,8 @@ string GraphicsShader::FilterComments(string text)
 	return filteredText;
 }
 
-string GraphicsShader::ProcessIncludes(string text, ResourceReference &ref)
+string RasterizationShader::ProcessIncludes(
+	string text, ResourceReference &ref)
 {
 	const string includeDirective = "##include";
 	const size_t inludeDirectiveLength = includeDirective.length();

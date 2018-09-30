@@ -1,5 +1,8 @@
 #include "gl4.hpp"
 
+#include <smorgasbord/image/image.hpp>
+#include <smorgasbord/util/log.hpp>
+
 #include <array>
 
 /*
@@ -284,21 +287,21 @@ inline GLenum GetSamplerWrap(SamplerWrap wrap)
 	LogF("Invalid enum value");
 }
 
-inline GLenum GetShaderStage(ShaderStage stage)
+inline GLenum GetShaderStage(RasterizationStage stage)
 {
 	switch (stage)
 	{
-	case ShaderStage::Vertex:
+	case RasterizationStage::Vertex:
 		return GL_VERTEX_SHADER;
-	case ShaderStage::TesselationControl:
+	case RasterizationStage::TesselationControl:
 		return GL_TESS_CONTROL_SHADER;
-	case ShaderStage::TesselationEvaluation:
+	case RasterizationStage::TesselationEvaluation:
 		return GL_TESS_EVALUATION_SHADER;
-	case ShaderStage::Geometry:
+	case RasterizationStage::Geometry:
 		return GL_GEOMETRY_SHADER;
-	case ShaderStage::Fragment:
+	case RasterizationStage::Fragment:
 		return GL_FRAGMENT_SHADER;
-	case ShaderStage::Num:
+	case RasterizationStage::Num:
 		LogF("Invalid enum value");
 		return GL_INVALID_ENUM;
 	}
@@ -582,11 +585,11 @@ shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
 	return image;
 }
 
-GL4GraphicsShader::GL4GraphicsShader(string name)
-	: GraphicsShader(name)
+GL4RasterizationShader::GL4RasterizationShader(string name)
+	: RasterizationShader(name)
 { }
 
-void GL4GraphicsShader::ResetBindings()
+void GL4RasterizationShader::ResetBindings()
 {
 	// TODO: unset sampler bindings?
 }
@@ -681,7 +684,7 @@ inline void SetConstantField(
 	}
 }
 
-void GL4GraphicsShader::ApplyBindings(GL4Device *device)
+void GL4RasterizationShader::ApplyBindings(GL4Device *device)
 {
 	// TODO: create buffer for parameterBuffer if buffer backed
 	///for (auto &b : parameterBuffers)
@@ -694,6 +697,10 @@ void GL4GraphicsShader::ApplyBindings(GL4Device *device)
 	///			BufferUsageFrequency::Stream,
 	///			b.first->GetBufferSize());
 	///	}
+	/// 
+	/// AssertF(gpuBuffer != nullptr, "Given buffer isn't valid");
+	/// AssertF(gpuBuffer->GetSize() >= b.GetBufferSize(),
+	/// 	"Given buffer isn't large enough");
 	///}
 	
 	// Upload constant buffers
@@ -705,34 +712,44 @@ void GL4GraphicsShader::ApplyBindings(GL4Device *device)
 	
 	for (const auto &buffer : parameterBuffers)
 	{
-		if (buffer.second.setOp == SetOp::Constants)
+		if (buffer.second.setOp != SetOp::Constants)
 		{
-			uint32_t i = 0;
-			for (const auto &field : buffer.first->GetFields())
-			{
-				const auto &types = GetVariableTypes();
-				auto result = types.find(field.type);
-				AssertF(
-					result != types.end(),
-					"Unrecognised parameter type");
-				
-				// TODO: check if variable is used/enumerated
-				// see enumerableConstants
-				
-				SetConstantField(i, result->second, field.p);
-				
-				i++;
-			}
-			
-			break;
+			continue;
 		}
+		
+		uint32_t i = 0;
+		const auto &types = GetVariableTypes();
+		for (const auto &field : buffer.first->GetFields())
+		{
+			auto result = types.find(field.type);
+			AssertF(
+				result != types.end(),
+				"Unrecognised parameter type");
+				
+			/// Avoid mat3 in ParameterBuffers: mat3 must be uploaded as a
+			/// mat4 according to the OpenGL std140​ layout specification, so
+			/// it will ruin field alignment and you won't even be able to
+			/// read the mat3 from the shader properly
+			AssertE(
+				string(field.type) != "mat3",
+				"Look at that! A mat3 in a ParameterBuffer? That won't do!");
+			
+			// TODO: check if variable is used/enumerated
+			// see enumerableConstants
+			
+			SetConstantField(i, result->second, field.p);
+			
+			i++;
+		}
+		
+		//break;
 	}
 }
 
 inline void AddToStages(
-	map<ShaderStage, stringstream> &stages,
+	map<RasterizationStage, stringstream> &stages,
 	const string &text,
-	Smorgasbord::ShaderStageFlag stageMask)
+	Smorgasbord::RasterizationStageFlag stageMask)
 {
 	for (auto &stage : stages)
 	{
@@ -764,7 +781,7 @@ inline string GetAttributeTypeName(
 	return result + fmt::format("{0}", numComponents);
 }
 
-void GL4GraphicsShader::Compile(
+void GL4RasterizationShader::Compile(
 	const Pass &pass, const GeometryLayout &geometryLayout)
 {
 	if (isCompiled)
@@ -772,7 +789,7 @@ void GL4GraphicsShader::Compile(
 		return;
 	}
 	
-	map<ShaderStage, stringstream> stages;
+	map<RasterizationStage, stringstream> stages;
 	//ShaderStageFlag activeStageMask = ShaderStageFlag::None;
 	
 	for (auto &source : sources)
@@ -786,7 +803,7 @@ void GL4GraphicsShader::Compile(
 	
 	// TODO: add additionalsources to stage mask
 	
-	AddToStages(stages, "#version 450", ShaderStageFlag::All);
+	AddToStages(stages, "#version 450", RasterizationStageFlag::All);
 	
 	// Add input layout
 	
@@ -801,7 +818,8 @@ void GL4GraphicsShader::Compile(
 					attribute.accessType, attribute.numComponents),
 				attribute.name);
 			
-			AddToStages(stages, attributeString, ShaderStageFlag::Vertex);
+			AddToStages(
+				stages, attributeString, RasterizationStageFlag::Vertex);
 		}
 	}
 	
@@ -846,7 +864,8 @@ void GL4GraphicsShader::Compile(
 						"#endif\n",
 					i, field.type, field.name);
 				
-				AddToStages(stages, unformString, ShaderStageFlag::All);
+				AddToStages(
+					stages, unformString, RasterizationStageFlag::All);
 				i++;
 			}
 			break;
@@ -861,7 +880,7 @@ void GL4GraphicsShader::Compile(
 			fmt::format("out {0} {1};",
 			color->GetType(), color->GetName());
 		
-		AddToStages(stages, colorString, ShaderStageFlag::Fragment);
+		AddToStages(stages, colorString, RasterizationStageFlag::Fragment);
 	}
 	
 	// TODO: depth attachments
@@ -931,7 +950,7 @@ void GL4GraphicsShader::Compile(
 	this->programID = newProgramID;
 }
 
-void GL4GraphicsShader::PrintErrorLog(GLuint sourceID, GLuint programID)
+void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 {
 	stringstream errorLog;
 	GLint stageType = GL_NONE;
@@ -994,13 +1013,13 @@ void GL4GraphicsShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	LogE("{0}", errorLog.str());
 }
 
-void GL4GraphicsShader::Use()
+void GL4RasterizationShader::Use()
 {
 	AssertF(programID != 0, "Cannot use uninitialized program");
 	glUseProgram(programID);
 }
 
-void GL4GraphicsShader::Set(TextureSamplerSet &_samplers)
+void GL4RasterizationShader::Set(TextureSamplerSet &_samplers)
 {
 	samplers = &_samplers;
 	
@@ -1024,10 +1043,10 @@ void GL4GraphicsShader::Set(TextureSamplerSet &_samplers)
 	//		 See: GL4GraphicsShader::GetNumSamplers()
 }
 
-void GL4GraphicsShader::Set(
+void GL4RasterizationShader::Set(
 	ParameterBuffer &buffer,
 	SetOp setOp,
-	ShaderStageFlag stageFlags)
+	RasterizationStageFlag stageFlags)
 {
 	// TODO: check that only one buffer is bound with SetOp::Constants
 	
@@ -1138,15 +1157,15 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 }
 
 void GL4CommandBuffer::SetPipeline(
-	shared_ptr<GraphicsShader> _shader,
+	shared_ptr<RasterizationShader> _shader,
 	const GeometryLayout &_geometryLayout,
 	const GraphicsPipelineState &_pipelineState)
 {
 	// Set Shader
 	
 	AssertF(_shader != nullptr, "Uninitialized shader was given");
-	shared_ptr<GL4GraphicsShader> s =
-			dynamic_pointer_cast<GL4GraphicsShader>(_shader);
+	shared_ptr<GL4RasterizationShader> s =
+			dynamic_pointer_cast<GL4RasterizationShader>(_shader);
 	AssertF(s != nullptr, "Given shader is not a GL4GraphicsShader");
 	if (shader == nullptr
 		|| shader != _shader)
@@ -1255,7 +1274,7 @@ void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
 						GetAttributeDataType(attribute.dataType),
 						attribute.normalize ? GL_TRUE : GL_FALSE, 
 						attribute.stride,
-						static_cast<uint8_t*>(nullptr) + attribute.offset
+						&static_cast<uint8_t*>(nullptr)[attribute.offset]
 						);
 					break;
 					
@@ -1265,7 +1284,7 @@ void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
 						attribute.numComponents, 
 						GetAttributeDataType(attribute.dataType),
 						attribute.stride,
-						static_cast<uint8_t*>(nullptr) + attribute.offset
+						&static_cast<uint8_t*>(nullptr)[attribute.offset]
 						);
 					break;
 					
@@ -1275,7 +1294,7 @@ void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
 						attribute.numComponents, 
 						GetAttributeDataType(attribute.dataType),
 						attribute.stride,
-						static_cast<uint8_t*>(nullptr) + attribute.offset
+						&static_cast<uint8_t*>(nullptr)[attribute.offset]
 						);
 					break;
 				}
@@ -1544,9 +1563,10 @@ shared_ptr<CommandBuffer> GL4Device::CreateCommandBuffer()
 	return make_shared<GL4CommandBuffer>(this);
 }
 
-shared_ptr<GraphicsShader> GL4Device::CreateGraphicsShader(string name)
+shared_ptr<RasterizationShader> GL4Device::CreateRasterizationShader(
+	string name)
 {
-	return make_shared<GL4GraphicsShader>(name);
+	return make_shared<GL4RasterizationShader>(name);
 }
 
 shared_ptr<Buffer> GL4Device::CreateBuffer(

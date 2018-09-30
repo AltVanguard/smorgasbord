@@ -1,5 +1,7 @@
 #include "staticmesh.hpp"
 
+#include <smorgasbord/util/log.hpp>
+
 void Smorgasbord::MeshData::UpdateStatistics()
 {
 	polyCount = c.size();

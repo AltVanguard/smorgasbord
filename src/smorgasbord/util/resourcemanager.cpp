@@ -106,12 +106,14 @@ string Smorgasbord::ResourceManager::GetPath(string path)
 
 unique_ptr<istream> Smorgasbord::ResourceManager::OpenRead(string path)
 {
+	string relativePath = GetPath(path);
+	
 	unique_ptr<ifstream> file =
-		make_unique<ifstream>(GetPath(path).c_str(), ios_base::binary);
+		make_unique<ifstream>(relativePath.c_str(), ios_base::binary);
 	
 	if (!file->is_open())
 	{
-		LogE("Cannot open file");
+		LogE("Cannot open file {0}", relativePath);
 		return { };
 	}
 	

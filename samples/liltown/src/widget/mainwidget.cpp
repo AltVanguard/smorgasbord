@@ -1,10 +1,11 @@
 #include "mainwidget.hpp"
 
-#include <smorgasbord/gpu/graphics.hpp>
+#include <smorgasbord/gpu/gpuapi.hpp>
 #include <smorgasbord/import/loadobj.hpp>
 #include <smorgasbord/import/loadtexture.hpp>
 #include <smorgasbord/rendering/camera.hpp>
 #include <smorgasbord/util/resourcemanager.hpp>
+#include <smorgasbord/window/cameracontroller.hpp>
 
 #include <memory>
 
@@ -44,8 +45,8 @@ struct MainWidget::Internal : InternalBase
 {
 	struct MeshParams : public ParameterBuffer
 	{
-		SMORGASBORD_FIELD(mat4, c_mvp,);
-		SMORGASBORD_FIELD(float, c_t,) = 0;
+		SMORGASBORD_FIELD(mat4, c_mvp);
+		SMORGASBORD_FIELD(float, c_t) = 0;
 	} meshParams;
 	
 	struct MeshSamplers : public TextureSamplerSet
@@ -55,24 +56,24 @@ struct MainWidget::Internal : InternalBase
 	
 	struct BlitSamplers : public TextureSamplerSet
 	{
-		SMORGASBORD_SAMPLER(float 4, s_texture, stages: f; filter: llccc);
+		SMORGASBORD_SAMPLER(float 4, s_texture, stages: f, filter: llccc);
 	} blitSamplers;
 
 	struct MeshPass : public Pass
 	{
-		SMORGASBORD_COLOR_ATTACHMENT(vec4, a_color,);
-		SMORGASBORD_DEPTH_ATTACHMENT(float, a_depth,);
+		SMORGASBORD_COLOR_ATTACHMENT(vec4, a_color);
+		SMORGASBORD_DEPTH_ATTACHMENT(float, a_depth);
 	} meshPass;
 	
 	struct BlitPass : public Pass
 	{
-		SMORGASBORD_COLOR_ATTACHMENT(vec4, a_color,);
+		SMORGASBORD_COLOR_ATTACHMENT(vec4, a_color);
 	} blitPass;
 	
-	shared_ptr<GraphicsShader> meshShader =
-		d->CreateGraphicsShader("mesh");
-	shared_ptr<GraphicsShader> blitShader =
-		d->CreateGraphicsShader("blit");
+	shared_ptr<RasterizationShader> meshShader =
+		d->CreateRasterizationShader("mesh");
+	shared_ptr<RasterizationShader> blitShader =
+		d->CreateRasterizationShader("blit");
 	
 	shared_ptr<FrameBuffer> offscreenFrame = d->CreateFrameBuffer();
 	
@@ -80,12 +81,14 @@ struct MainWidget::Internal : InternalBase
 	shared_ptr<Texture> testTexture;
 	
 	Camera camera;
-	//FlyCameraController camController = &camera;
+	FlyCameraController camController = &camera;
 	
 	shared_ptr<Queue> q;
 	vector< shared_ptr<CommandBuffer> > commandBuffers;
 	shared_ptr<SwapChain> swapChain;
 	vector<shared_ptr<FrameBuffer>> displayFrames;
+	
+	FrameScheduler scheduler;
 	
 	float t = 0.0f;
 	
@@ -95,7 +98,6 @@ struct MainWidget::Internal : InternalBase
 };
 
 MainWidget::MainWidget(ivec2 logicalSize)
-	: scheduler(FrameScheduleMode::EveryFrame)
 {
 	this->size = logicalSize;
 }
@@ -119,7 +121,7 @@ void MainWidget::Setup(
 	
 	m.mesh = make_shared<StaticMesh>(
 		m.d, LoadOBJ(m.r->Get("town.obj")));
-	m.testTexture = LoadTextureImage(m.d, m.r->GetPath("wtf.png"));
+	m.testTexture = LoadTexture(m.d, m.r->GetPath("wtf.png"));
 	
 	m.meshShader->SetSource(m.r->Get("mesh.shader"));
 	m.blitShader->SetSource(m.r->Get("blit.shader"));
@@ -133,6 +135,9 @@ void MainWidget::Setup(
 	m.swapChain = m.d->CreateSwapChain();
 	m.commandBuffers = m.d->CreateCommandBuffers(m.swapChain->GetLength());
 	m.displayFrames = m.swapChain->GetFrameBuffers();
+	
+	// Try pressing or holding the Space key when in FadeOnDemand mode
+	m.scheduler.SetFrameScheduleMode(FrameScheduleMode::FadeOnDemand);
 }
 
 void MainWidget::Render()
@@ -198,37 +203,10 @@ void MainWidget::Draw()
 {
 	Internal &m = *internal;
 	
-	SyncStatus syncStatus = scheduler.GetSyncStatus();
-	switch (syncStatus)
+	if (m.scheduler.CanDraw())
 	{
-	case SyncStatus::ScheduleNextFrame:
-		break;
-		
-	case SyncStatus::ReadyToDraw: // Rendering
-		//timeQuery.Begin();
 		Render();
-		//timeQuery.End();
-		
-		//scheduler.Signal(SyncStatus::DrawInProgress);
-		//break;
-	
-	case SyncStatus::DrawInProgress: // Finish frame
-		//if (!timeQuery.IsReady())
-		//{
-		//	break;
-		//}
-		//else
-		//{
-		//	//scheduler.Signal(SyncStatus::ReadyToSwap);
-		//	/// goto ReadyToSwap
-		//}
-	
-	case SyncStatus::ReadyToSwap: // Swap buffers
 		m.d->GetDisplayQueue()->Present();
-		
-		//counter.FinishFrame(timeQuery.GetElapsedTime());
-		scheduler.Signal(SyncStatus::ScheduleNextFrame);
-		break;
 	}
 }
 
@@ -236,12 +214,12 @@ void MainWidget::HandleEvent(SDL_Event windowEvent)
 {
 	Internal &m = *internal;
 	
-	//if (static_cast<bool>(internal)
-	//	&& m.camController.HandleEvent(windowEvent))
-	//{
-	//	this->scheduler.Invalidate();
-	//	return;
-	//}
+	if (static_cast<bool>(internal)
+		&& m.camController.HandleEvent(windowEvent))
+	{
+		m.scheduler.Invalidate();
+		return;
+	}
 	
 	switch (windowEvent.type)
 	{

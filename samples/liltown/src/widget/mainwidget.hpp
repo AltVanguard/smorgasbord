@@ -1,7 +1,7 @@
 #ifndef MAINSCENEWIDGET_H
 #define MAINSCENEWIDGET_H
 
-#include <smorgasbord/gpu/graphics.hpp>
+#include <smorgasbord/gpu/gpuapi.hpp>
 #include <smorgasbord/rendering/transform.hpp>
 #include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/timer.hpp>
@@ -25,10 +25,6 @@ class MainWidget : public Widget
 	unique_ptr<Internal> internal;
 	
 	ivec2 size;
-	
-	FrameScheduler scheduler;
-	FrameTimeCounter counter;
-	GL4TimeQuery timeQuery;
 	
 public:
 	MainWidget(ivec2 logicalSize);

@@ -1,5 +1,6 @@
 #include "glwindow.hpp"
 
+#include <smorgasbord/gpu/gl4.hpp>
 #include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/timer.hpp>
 
@@ -8,6 +9,36 @@
 #include <iostream>
 
 using namespace Smorgasbord;
+
+class SDLGL4Queue : public GL4Queue
+{
+	SDL_Window *window = nullptr;
+	
+public:
+	SDLGL4Queue(SDL_Window *_window)
+		: window(_window)
+	{ }
+	
+	virtual void Present() override
+	{
+		SDL_GL_SwapWindow(window);
+	}
+};
+
+class SDLGL4Device : public GL4Device
+{
+	SDL_Window *window = nullptr;
+	
+public:
+	SDLGL4Device(SDL_Window *_window)
+		: window(_window)
+	{ }
+	
+	virtual shared_ptr<Queue> GetDisplayQueue() override
+	{
+		return make_shared<SDLGL4Queue>(this->window);
+	}
+};
 
 #ifdef WIN32
 
@@ -94,6 +125,11 @@ void Smorgasbord::GLWindow::Init(
 	LogI((const char*)glGetString(GL_VERSION));
 	
 	//SDL_GL_SetSwapInterval(1); // TODO: provide setting to enable/disable}
+}
+
+shared_ptr<Device> GLWindow::GetGL4Device()
+{
+	return make_shared<SDLGL4Device>(this->window);
 }
 
 void Smorgasbord::GLWindow::CleanupLibs()

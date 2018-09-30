@@ -55,6 +55,12 @@ public:
 		this->assertLevel = assertLevel;
 	}
 	
+	// Oneline info
+	void O(const string& message)
+	{
+		*this->stream << "INFO " << message << endl;
+	}
+	
 	// Info
 	void I(const string& caller, const string& message)
 	{
@@ -118,6 +124,7 @@ extern Log mainLog;
 
 }
 
+#define LogO(...) Smorgasbord::mainLog.O(fmt::format(__VA_ARGS__))
 #define LogI(...) Smorgasbord::mainLog.I( \
 	SMORGASBORD_CURRENT_FUNCTION, fmt::format(__VA_ARGS__))
 #define LogW(...) Smorgasbord::mainLog.W( \

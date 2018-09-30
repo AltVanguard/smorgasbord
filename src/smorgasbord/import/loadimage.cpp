@@ -1,5 +1,6 @@
 #include "loadimage.hpp"
 
+#include <smorgasbord/image/image.hpp>
 #include <smorgasbord/util/log.hpp>
 
 #include <lodepng.h>
@@ -44,7 +45,8 @@ void Smorgasbord::SaveImagePNG(Smorgasbord::Image &image, string filename)
 		return;
 	}
 	
-	unsigned int error = lodepng::encode(filename, image.data, image.imageSize.x, image.imageSize.y);
+	unsigned int error = lodepng::encode(
+		filename, image.data, image.imageSize.x, image.imageSize.y);
 	
 	if (error != 0)
 	{

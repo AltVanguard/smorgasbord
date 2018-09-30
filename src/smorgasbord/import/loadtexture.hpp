@@ -1,10 +1,8 @@
 #ifndef SMORGASBORD_LOADTEXTURE_HPP
 #define SMORGASBORD_LOADTEXTURE_HPP
 
-#include <smorgasbord/gpu/graphics.hpp>
-#include <smorgasbord/image/image.hpp>
-
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,8 +10,10 @@ using namespace std;
 
 namespace Smorgasbord {
 
-shared_ptr<Texture> LoadTextureImage(
-	shared_ptr<Device> device, string filename);
+class Texture;
+class Device;
+
+shared_ptr<Texture> LoadTexture(shared_ptr<Device> device, string filename);
 
 }
 

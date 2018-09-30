@@ -1,10 +1,9 @@
 #ifndef SMORGASBORD_GL4_BACKEND_H
 #define SMORGASBORD_GL4_BACKEND_H
 
-#include <smorgasbord/gpu/graphics.hpp>
+#include <smorgasbord/gpu/gpuapi.hpp>
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 
 #include <unordered_map>
 #include <set>
@@ -120,22 +119,22 @@ public:
 struct GL4BindCommand
 {
 	SetOp setOp = SetOp::Invalidate;
-	ShaderStageFlag stageFlag = ShaderStageFlag::None;
+	RasterizationStageFlag stageFlag = RasterizationStageFlag::None;
 	
 	GL4BindCommand(
 		SetOp _setOp,
-		ShaderStageFlag _stageFlag)
+		RasterizationStageFlag _stageFlag)
 		: setOp(_setOp), stageFlag(_stageFlag)
 	{ }
 };
 
-class GL4GraphicsShader : public GraphicsShader
+class GL4RasterizationShader : public RasterizationShader
 {
 private:
 	TextureSamplerSet *samplers = nullptr;
-	unordered_map<ParameterBuffer*, GL4BindCommand> parameterBuffers;
-	unordered_map<Buffer*, string> buffers;
-	map<ShaderStage, GLuint> sourceIDs;
+	map<ParameterBuffer*, GL4BindCommand> parameterBuffers;
+	map<Buffer*, string> buffers;
+	map<RasterizationStage, GLuint> sourceIDs;
 	GLuint programID = 0;
 	set<string> enumerableConstants;
 	/// Changes to the source are no longer allowed after compilation, such as
@@ -144,7 +143,7 @@ private:
 	bool isCompiled = false;
 	
 public:
-	GL4GraphicsShader(string name = "");
+	GL4RasterizationShader(string name = "");
 	
 	void ResetBindings();
 	void ApplyBindings(GL4Device *device);
@@ -157,7 +156,7 @@ public:
 	virtual void Set(
 		ParameterBuffer &buffer,
 		SetOp setOp,
-		ShaderStageFlag stageFlag) override;
+		RasterizationStageFlag stageFlag) override;
 	
 	uint32_t GetNumSamplers()
 	{
@@ -209,7 +208,7 @@ class GL4CommandBuffer : public CommandBuffer
 	GL4Device *device = nullptr; // TODO: change to shared_ptr
 	shared_ptr<IGL4FrameBuffer> frameBuffer;
 	const Pass *passAddress = nullptr;
-	shared_ptr<GL4GraphicsShader> shader;
+	shared_ptr<GL4RasterizationShader> shader;
 	GeometryLayout geometryLayout;
 	GraphicsPipelineState pipelineState;
 	
@@ -221,7 +220,7 @@ public:
 	virtual void SetFrameBuffer(shared_ptr<FrameBuffer> framebuffer) override;
 	virtual void StartPass(const Pass &pass) override;
 	virtual void SetPipeline(
-		shared_ptr<GraphicsShader> shader,
+		shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
 		const GraphicsPipelineState &pipelineState) override;
 	virtual void Draw(
@@ -306,7 +305,7 @@ public:
 		uint32_t preferredLength = 0) override;
 	virtual shared_ptr<FrameBuffer> CreateFrameBuffer() override;
 	virtual shared_ptr<CommandBuffer> CreateCommandBuffer() override;
-	virtual shared_ptr<GraphicsShader> CreateGraphicsShader(
+	virtual shared_ptr<RasterizationShader> CreateRasterizationShader(
 		string name = "") override;
 	virtual shared_ptr<Buffer> CreateBuffer(
 		BufferType bufferType,

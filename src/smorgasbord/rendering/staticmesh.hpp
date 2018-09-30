@@ -1,7 +1,7 @@
 #ifndef SMORGASBORD_STATICMESH_HPP
 #define SMORGASBORD_STATICMESH_HPP
 
-#include <smorgasbord/gpu/graphics.hpp>
+#include <smorgasbord/gpu/gpuapi.hpp>
 
 #include <glm/glm.hpp>
 

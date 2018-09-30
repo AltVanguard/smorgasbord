@@ -1,6 +1,5 @@
 #include "loadobj.hpp"
 
-#include <smorgasbord/gpu/graphics.hpp>
 #include <smorgasbord/util/log.hpp>
 
 #include <glm/glm.hpp>

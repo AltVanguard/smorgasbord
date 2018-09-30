@@ -1,8 +1,6 @@
-#ifndef SMORGASBORD_GPU_GRAPHICS_HPP
-#define SMORGASBORD_GPU_GRAPHICS_HPP
+#ifndef SMORGASBORD_GPU_GPUAPI_HPP
+#define SMORGASBORD_GPU_GPUAPI_HPP
 
-#include <smorgasbord/image/image.hpp>
-#include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/resourcemanager.hpp>
 #include <smorgasbord/util/scope.hpp>
 
@@ -125,6 +123,7 @@ allocation, upload, etc.
 /// TODO: GraphicsShader::SetName()
 /// TODO: PrimitiveTopology: Support for *Adjacency primitive topologies.
 ///		Only used in geometry shaders, otherwise ignored
+/// TODO?: *_MOD macros could be hidden with BOOST_PP_OVERLOAD
 
 #define SMORGASBORD_CONTANTBUFFER(name, instance, body) \
 	struct name { \
@@ -135,22 +134,33 @@ allocation, upload, etc.
 		} \
 	};
 
-#define SMORGASBORD_FIELD(type, name, ...) \
+#define SMORGASBORD_FIELD(type, name) \
+	type name = enumerator.Add<type>(&name, #type, #name)
+#define SMORGASBORD_FIELD_MOD(type, name, ...) \
 	type name = enumerator.Add<type>(&name, #type, #name, #__VA_ARGS__)
-#define SMORGASBORD_FIELD_ARRAY(type, arraySize, name, ...) \
+#define SMORGASBORD_FIELD_ARRAY(type, arraySize, name) \
+	std::array<type, arraySize> name = enumerator.AddArray<type, arraySize>( \
+		&name, #type, #name)
+#define SMORGASBORD_FIELD_ARRAY_MOD(type, arraySize, name, ...) \
 	std::array<type, arraySize> name = enumerator.AddArray<type, arraySize>( \
 		&name, #type, #name, #__VA_ARGS__)
 #define SMORGASBORD_SAMPLER(type, name, ...) \
 	TextureSampler name = enumerator.Add(&name, #type, #name, #__VA_ARGS__)
-#define SMORGASBORD_COLOR_ATTACHMENT(type, name, ...) \
+#define SMORGASBORD_COLOR_ATTACHMENT(type, name) \
+	ColorAttachment name = enumerator.Add(&name, #type, #name)
+#define SMORGASBORD_COLOR_ATTACHMENT_MOD(type, name, ...) \
 	ColorAttachment name = enumerator.Add(&name, #type, #name, #__VA_ARGS__)
-#define SMORGASBORD_DEPTH_ATTACHMENT(type, name, ...) \
+#define SMORGASBORD_DEPTH_ATTACHMENT(type, name) \
+	DepthAttachment name = enumerator.Add(&name, #type, #name)
+#define SMORGASBORD_DEPTH_ATTACHMENT_MOD(type, name, ...) \
 	DepthAttachment name = enumerator.Add(&name, #type, #name, #__VA_ARGS__)
 
 using namespace glm;
 using namespace std;
 
 namespace Smorgasbord {
+
+class Image;
 
 enum class BufferType
 {
@@ -237,7 +247,7 @@ enum class PrimitiveTopology
 	PatchList
 };
 
-enum class ShaderStage : uint32_t
+enum class RasterizationStage : uint32_t
 {
 	Vertex = 0,
 	/// Domain shader in DX terminology
@@ -249,19 +259,20 @@ enum class ShaderStage : uint32_t
 	Fragment,
 	Num
 	
-	/// Compute shader is not included because it cannot be
+	/// Compute shader is not included here because it cannot be
 	/// in the same pipeline with the rest
 };
 
-enum class ShaderStageFlag : uint32_t
+enum class RasterizationStageFlag : uint32_t
 {
 	None = 0,
-	Vertex = (1 << (uint32_t)ShaderStage::Vertex),
-	TesselationControl = (1 << (uint32_t)ShaderStage::TesselationControl),
+	Vertex = (1 << (uint32_t)RasterizationStage::Vertex),
+	TesselationControl =
+		(1 << (uint32_t)RasterizationStage::TesselationControl),
 	TesselationEvaluation =
-		(1 << (uint32_t)ShaderStage::TesselationEvaluation),
-	Geometry = (1 << (uint32_t)ShaderStage::Geometry),
-	Fragment = (1 << (uint32_t)ShaderStage::Fragment),
+		(1 << (uint32_t)RasterizationStage::TesselationEvaluation),
+	Geometry = (1 << (uint32_t)RasterizationStage::Geometry),
+	Fragment = (1 << (uint32_t)RasterizationStage::Fragment),
 	All = Vertex
 		| TesselationControl
 		| TesselationEvaluation
@@ -269,33 +280,37 @@ enum class ShaderStageFlag : uint32_t
 		| Fragment
 };
 
-inline ShaderStageFlag operator|(ShaderStageFlag a, ShaderStageFlag b)
+inline RasterizationStageFlag operator|(
+	RasterizationStageFlag a, RasterizationStageFlag b)
 {
-	return static_cast<ShaderStageFlag>(
+	return static_cast<RasterizationStageFlag>(
 		static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
-inline ShaderStageFlag operator|=(ShaderStageFlag &a, ShaderStageFlag b)
+inline RasterizationStageFlag operator|=(
+	RasterizationStageFlag &a, RasterizationStageFlag b)
 {
-	a = static_cast<ShaderStageFlag>(
+	a = static_cast<RasterizationStageFlag>(
 		static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 	return a;
 }
 
-inline ShaderStageFlag operator&(ShaderStageFlag a, ShaderStageFlag b)
+inline RasterizationStageFlag operator&(
+	RasterizationStageFlag a, RasterizationStageFlag b)
 {
-	return static_cast<ShaderStageFlag>(
+	return static_cast<RasterizationStageFlag>(
 		static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
-inline ShaderStageFlag operator&=(ShaderStageFlag &a, ShaderStageFlag b)
+inline RasterizationStageFlag operator&=(
+	RasterizationStageFlag &a, RasterizationStageFlag b)
 {
-	a = static_cast<ShaderStageFlag>(
+	a = static_cast<RasterizationStageFlag>(
 		static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 	return a;
 }
 
-inline bool operator>(ShaderStageFlag a, uint32_t b)
+inline bool operator>(RasterizationStageFlag a, uint32_t b)
 {
 	return static_cast<uint32_t>(a) > b;
 }
@@ -316,8 +331,9 @@ enum class StoreOp
 /// <channels>_<bit_layout_per_channel>_<access_type>
 /// <channels>: one or more of R, G, B, A, Depth, Stencil
 /// <access_type>: sRGB, UNorm, ...
-///		sRGB: accessed as float [0,1], A is linear, RGB are in gamma space
-///		UNorm: the integer value range ir remapped to a [0,1] float value
+///		UNorm: the stored uint value of [0,2^bits-1] is remapped to
+///			a [0,1] float value
+///		sRGB: UNorm were A is in linear space, RGB are in gamma space
 enum class TextureFormat
 {
 	RGBA_8_8_8_8_UNorm = 0,
@@ -396,44 +412,6 @@ inline uint32_t GetIndexDataTypeSize(IndexDataType type)
 	return 0;
 }
 
-inline ShaderStageFlag ParseShaderStageFlags(string stageFlagsString)
-{
-	ShaderStageFlag stageFlags = ShaderStageFlag::None;
-	
-	const size_t numChars = stageFlagsString.length();
-	for (size_t i = 0; i < numChars; i++)
-	{
-		switch (stageFlagsString[i])
-		{
-		case 'a':
-			return ShaderStageFlag::All;
-		case 'v':
-			stageFlags = stageFlags | ShaderStageFlag::Vertex;
-			break;
-		case 'c':
-		case 'd':
-			stageFlags = stageFlags | ShaderStageFlag::TesselationControl;
-			break;
-		case 'e':
-		case 'h':
-			stageFlags = stageFlags | ShaderStageFlag::TesselationEvaluation;
-			break;
-		case 'g':
-			stageFlags = stageFlags | ShaderStageFlag::Geometry;
-			break;
-		case 'f':
-			stageFlags = stageFlags | ShaderStageFlag::Fragment;
-			break;
-		
-		default:
-			LogE("Not recognised stage flag");
-			return ShaderStageFlag::None;
-		}
-	}
-	
-	return stageFlags;
-}
-
 inline SamplerFilter ParseSamplerFilter(char c)
 {
 	switch (c)
@@ -464,30 +442,31 @@ inline SamplerWrap ParseSamplerWrap(char c)
 	}
 }
 
-inline ShaderStageFlag StageToFlag(ShaderStage stage)
+inline RasterizationStageFlag StageToFlag(RasterizationStage stage)
 {
-	return (ShaderStageFlag)(1u << (uint32_t)stage);
+	return (RasterizationStageFlag)(1u << (uint32_t)stage);
 }
 
-inline string StageToString(ShaderStage stage)
+inline string StageToString(RasterizationStage stage)
 {
 	switch (stage)
 	{
-	case ShaderStage::Vertex:
+	case RasterizationStage::Vertex:
 		return "vertex";
-	case ShaderStage::TesselationControl:
+	case RasterizationStage::TesselationControl:
 		return "tesselation control";
-	case ShaderStage::TesselationEvaluation:
+	case RasterizationStage::TesselationEvaluation:
 		return "tesselation evaluation";
-	case ShaderStage::Geometry:
+	case RasterizationStage::Geometry:
 		return "geometry";
-	case ShaderStage::Fragment:
+	case RasterizationStage::Fragment:
 		return "fragment";
-	case ShaderStage::Num:
-		LogF("Invalid shader stage");
+	case RasterizationStage::Num:
 		return "num";
 	}
 }
+
+RasterizationStageFlag ParseShaderStageFlags(string stageFlagsString);
 
 class Buffer
 {
@@ -595,14 +574,6 @@ public:
 	T& Add(
 		T *p, const char *type, const char *name, const char *modifier = "")
 	{
-		/// Avoid mat3 in ParameterBuffers: mat3 must be uploaded as a mat4
-		/// according to the OpenGL std140​ layout specification, so it will
-		/// ruin field alignment and you won't even be able to read the
-		/// mat3 from the shader properly
-		AssertE(
-			string(type) != "mat3",
-			"Look at that! A mat3 in a ParameterBuffer? That won't do!");
-		
 		const size_t size = sizeof(T);
 		fields.emplace_back(
 			p, (uint32_t)size, type, name, 0, modifier);
@@ -623,14 +594,6 @@ public:
 		const char *name,
 		const char *modifier = "")
 	{
-		/// Avoid mat3 in ParameterBuffers: mat3 must be uploaded as a mat4
-		/// according to the OpenGL std140​ layout specification, so it will
-		/// ruin field alignment and you won't even be able to read the
-		/// mat3 from the shader properly
-		AssertE(
-			string(type) != "mat3",
-			"Look at that! A mat3 in a ParameterBuffer? That won't do!");
-		
 		const size_t size = sizeof(T);
 		fields.emplace_back(
 			p, (uint32_t)size, type, name, arraySize, modifier);
@@ -674,10 +637,8 @@ public:
 	
 	void SetBuffer(shared_ptr<Buffer> buffer)
 	{
-		AssertF(buffer != nullptr, "Given buffer isn't valid");
-		AssertF(buffer->GetSize() >= GetBufferSize(),
-			"Given buffer isn't large enough");
-		
+		/// We refrain from checking if the buffer is appropriate, because
+		/// it will be checked anyway when we actually use it
 		gpuBuffer = buffer;
 	}
 	
@@ -761,10 +722,10 @@ public:
 	
 	void ParseFilter(const string &text);
 	
-	ShaderStageFlag GetStageMask()
+	RasterizationStageFlag GetStageMask()
 	{
 		// TODO: parse like ParseFilter()
-		return ShaderStageFlag::All;
+		return RasterizationStageFlag::All;
 	}
 	
 	TextureSampler& operator= (shared_ptr<Texture> texture)
@@ -1043,7 +1004,7 @@ public:
 };
 
 /// Collection of the shader stages and the desriptor layout
-class GraphicsShader
+class RasterizationShader
 {
 public:
 	static const map<string, VariableType> &GetVariableTypes();
@@ -1052,25 +1013,25 @@ protected:
 	string name;
 	ResourceReference sourceFile;
 	/// Source texts for each shader stage
-	map<ShaderStage, string> sources;
+	map<RasterizationStage, string> sources;
 	/// To be merged with source file contents, like defines,
 	/// constants, etc.
-	map<ShaderStage, stringstream> additionalSources;
+	map<RasterizationStage, stringstream> additionalSources;
 	
 public:
-	GraphicsShader(string name = "");
-	virtual ~GraphicsShader() { }
+	RasterizationShader(string name = "");
+	virtual ~RasterizationShader() { }
 	
 	void SetSource(ResourceReference source);
 	//void SetSource(const string &text); // TODO
-	void AddText(ShaderStageFlag stageFlags, const string &text);
+	void AddText(RasterizationStageFlag stageFlags, const string &text);
 	vector<stringstream> GetStageSources();
 	
 	virtual void Set(TextureSamplerSet &samplers) = 0;
 	virtual void Set(
 		ParameterBuffer &buffer,
 		SetOp setOp,
-		ShaderStageFlag stageFlags = ShaderStageFlag::All) = 0;
+		RasterizationStageFlag stageFlags = RasterizationStageFlag::All) = 0;
 	
 	string GetName()
 	{
@@ -1085,9 +1046,9 @@ public:
 		Set(buffer, setOp, ParseShaderStageFlags(stageflagsString));
 	}
 	
-	shared_ptr<GraphicsShader> Clone(string newName = "")
+	shared_ptr<RasterizationShader> Clone(string newName = "")
 	{
-		shared_ptr<GraphicsShader> shader;
+		shared_ptr<RasterizationShader> shader;
 		// TODO: copy sourceFile and sources (but not additionalSources)
 		return shader;
 	}
@@ -1095,6 +1056,16 @@ public:
 private:
 	string FilterComments(string text);
 	string ProcessIncludes(string text, ResourceReference &ref);
+};
+
+class ComputeShader
+{
+	
+};
+
+class RayTraceShader
+{
+	
 };
 
 struct BlendState
@@ -1208,10 +1179,7 @@ public:
 	
 	shared_ptr<Texture> GetColor(uint32_t attachmentIndex)
 	{
-		AssertF(
-			attachmentIndex < 8, // TODO: use maxColorAttachments
-			"attachmentIndex too large, see DeviceInfo::maxColorAttachments");
-		return colorAttachments[attachmentIndex];
+		return colorAttachments.at(attachmentIndex);
 	}
 	
 	shared_ptr<Texture> GetDepth()
@@ -1228,7 +1196,7 @@ public:
 	virtual void SetFrameBuffer(shared_ptr<FrameBuffer> framebuffer) = 0;
 	virtual void StartPass(const Pass &pass) = 0;
 	virtual void SetPipeline(
-		shared_ptr<GraphicsShader> shader,
+		shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
 		const GraphicsPipelineState &pipeline) = 0;
 	virtual void Draw(
@@ -1293,7 +1261,7 @@ public:
 		uint32_t preferredLength = 0) = 0;
 	virtual shared_ptr<FrameBuffer> CreateFrameBuffer() = 0;
 	virtual shared_ptr<CommandBuffer> CreateCommandBuffer() = 0;
-	virtual shared_ptr<GraphicsShader> CreateGraphicsShader(
+	virtual shared_ptr<RasterizationShader> CreateRasterizationShader(
 		string name = "") = 0;
 	virtual shared_ptr<Buffer> CreateBuffer(
 		BufferType bufferType, 
@@ -1317,4 +1285,4 @@ public:
 
 }
 
-#endif // SMORGASBORD_GPU_GRAPHICS_HPP
+#endif // SMORGASBORD_GPU_GPUAPI_HPP

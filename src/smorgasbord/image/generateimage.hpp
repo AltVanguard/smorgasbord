@@ -1,11 +1,9 @@
 #ifndef SMORGASBORD_GENERATEIMAGE_HPP
 #define SMORGASBORD_GENERATEIMAGE_HPP
 
-#include "image.hpp"
-
-using namespace std;
-
 namespace Smorgasbord {
+
+class Image;
 
 void GenerateWhiteNoise(Image& image, int seed);
 

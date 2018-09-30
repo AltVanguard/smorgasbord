@@ -1,8 +1,6 @@
 #ifndef SMORGASBORD_LOADIMAGE_HPP
 #define SMORGASBORD_LOADIMAGE_HPP
 
-#include <smorgasbord/image/image.hpp>
-
 #include <iostream>
 #include <memory>
 #include <string>
@@ -11,6 +9,8 @@
 using namespace std;
 
 namespace Smorgasbord {
+
+class Image;
 
 shared_ptr<Image> LoadImage(string filename);
 void SaveImage(Image& image, string filename);

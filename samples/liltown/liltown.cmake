@@ -19,6 +19,8 @@ file(GLOB_RECURSE SOURCES
 file(GLOB_RECURSE SHADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/data/*.shader"
 	"${CMAKE_CURRENT_SOURCE_DIR}/data/*.compute"
+	"${CMAKE_CURRENT_SOURCE_DIR}/data/*.rasterize"
+	"${CMAKE_CURRENT_SOURCE_DIR}/data/*.raytrace"
 )
 
 set_source_files_properties(${SHADERS} PROPERTIES
