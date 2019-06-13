@@ -120,7 +120,7 @@ allocation, upload, etc.
 ///		than "v_"
 /// TODO: implement ##input directive. It doesn't have a block, only
 ///		specifies the instance name of the input block
-/// TODO: GraphicsShader::SetName()
+/// TODO: RasterizationShader::SetName()
 /// TODO: PrimitiveTopology: Support for *Adjacency primitive topologies.
 ///		Only used in geometry shaders, otherwise ignored
 /// TODO?: *_MOD macros could be hidden with BOOST_PP_OVERLOAD
@@ -1090,7 +1090,7 @@ struct DepthTestState
 	}
 };
 
-struct GraphicsPipelineState
+struct RasterizationPipelineState
 {
 	BlendState blend;
 	DepthTestState depthTest;
@@ -1198,7 +1198,7 @@ public:
 	virtual void SetPipeline(
 		shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
-		const GraphicsPipelineState &pipeline) = 0;
+		const RasterizationPipelineState &pipeline) = 0;
 	virtual void Draw(
 		shared_ptr<Buffer> vertexBuffer,
 		IndexBufferRef indexBuffer,
@@ -1241,7 +1241,10 @@ public:
 struct DeviceInfo
 {
 	string name;
-	uint32_t maxColorAttachments = 0; // TODO
+	bool isRasterizationSupported = false;
+	bool isComputeSupported = false;
+	bool isRaytraceSupported = false;
+	uint32_t maxColorAttachments = 0;
 };
 
 class Device
@@ -1280,7 +1283,9 @@ class Backend
 public:
 	virtual ~Backend() { }
 	
-	virtual vector<shared_ptr<Device>> GetDevices() = 0;
+	virtual uint32_t GetNumDevices() = 0;
+	virtual const DeviceInfo &GetDeviceInfo(uint32_t index) const = 0;
+	virtual shared_ptr<Device> GetDevice(uint32_t index) = 0;
 };
 
 }

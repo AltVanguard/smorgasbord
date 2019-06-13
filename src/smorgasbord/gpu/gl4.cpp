@@ -1040,7 +1040,7 @@ void GL4RasterizationShader::Set(TextureSamplerSet &_samplers)
 	}
 	
 	// TODO: unbind slots we don't use,but was used in the last shader
-	//		 See: GL4GraphicsShader::GetNumSamplers()
+	//		 See: GL4RasterizationShader::GetNumSamplers()
 }
 
 void GL4RasterizationShader::Set(
@@ -1159,7 +1159,7 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 void GL4CommandBuffer::SetPipeline(
 	shared_ptr<RasterizationShader> _shader,
 	const GeometryLayout &_geometryLayout,
-	const GraphicsPipelineState &_pipelineState)
+	const RasterizationPipelineState &_pipelineState)
 {
 	// Set Shader
 	

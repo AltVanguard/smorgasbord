@@ -151,7 +151,7 @@ public:
 	void PrintErrorLog(GLuint sourceID, GLuint programID);
 	void Use();
 	
-	// GraphicsShader interface
+	// RasterizationShader interface
 	virtual void Set(TextureSamplerSet &samplers) override;
 	virtual void Set(
 		ParameterBuffer &buffer,
@@ -210,7 +210,7 @@ class GL4CommandBuffer : public CommandBuffer
 	const Pass *passAddress = nullptr;
 	shared_ptr<GL4RasterizationShader> shader;
 	GeometryLayout geometryLayout;
-	GraphicsPipelineState pipelineState;
+	RasterizationPipelineState pipelineState;
 	
 public:
 	GL4CommandBuffer(GL4Device *device);
@@ -222,7 +222,7 @@ public:
 	virtual void SetPipeline(
 		shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
-		const GraphicsPipelineState &pipelineState) override;
+		const RasterizationPipelineState &pipelineState) override;
 	virtual void Draw(
 		shared_ptr<Buffer> vertexBuffer,
 		IndexBufferRef indexBuffer,

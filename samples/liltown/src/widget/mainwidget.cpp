@@ -157,7 +157,7 @@ void MainWidget::Render()
 	m.meshPass.a_depth.SetToClear();
 	c.StartPass(m.meshPass);
 	
-	GraphicsPipelineState meshPS;
+	RasterizationPipelineState meshPS;
 	meshPS.depthTest.isEnabled = true;
 	meshPS.blend.isEnabled = false;
 	meshPS.viewport = {
@@ -183,7 +183,7 @@ void MainWidget::Render()
 	m.blitPass.a_color.SetToClear(vec4(1.0f, 0.7f, 0.7f, 1.0f));
 	c.StartPass(m.blitPass);
 	
-	GraphicsPipelineState blitPS;
+	RasterizationPipelineState blitPS;
 	blitPS.depthTest.isEnabled = false;
 	blitPS.blend.isEnabled = false;
 	blitPS.viewport = { 0, 0, this->size.x, this->size.y };

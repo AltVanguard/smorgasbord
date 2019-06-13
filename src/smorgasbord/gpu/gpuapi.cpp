@@ -253,7 +253,7 @@ void Smorgasbord::RasterizationShader::SetSource(
 			
 			if (!hadAnyStages)
 			{
-				LogE("Graphics shader contains no stages");
+				LogE("Rasterization shader contains no stages");
 				return;
 			}
 			
