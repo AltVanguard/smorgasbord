@@ -194,7 +194,7 @@ inline GLenum GetPrimitiveTopology(PrimitiveTopology topology)
 
 inline bool GetIsWithReset(PrimitiveTopology topology)
 {
-	/// Don't use result, so if a new topology is added, the compiler
+	/// Don't use default, so if a new topology is added, the compiler
 	/// ensures that the return value is properly specified
 	switch (topology)
 	{

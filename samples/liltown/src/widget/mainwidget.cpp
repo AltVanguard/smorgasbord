@@ -31,6 +31,7 @@ Vertex Attributes:
 v_p - Position
 v_n - Normal
 v_uv* - Texture UV coordniate
+v_c - Color
 
 */
 

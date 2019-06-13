@@ -60,13 +60,13 @@ public:
 		IndexBufferRef indexBuffer,
 		uint32_t numVertices,
 		GeometryLayout &geometryLayout);
-		
-	const Geometry &GetGeometry()
+	
+	const Geometry &GetGeometry() const
 	{
 		return geometry;
 	}
 	
-	GeometryLayout GetGeometryLayout()
+	const GeometryLayout &GetGeometryLayout() const
 	{
 		return geometryLayout;
 	}

@@ -1,5 +1,3 @@
-##version 430
-
 ##stage vertex
 
 ##output {
