@@ -605,16 +605,16 @@ inline void SetConstantField(
 		switch (type.numRows)
 		{
 		case 1:
-			glUniform1fv(location, type.numRows, (GLfloat*)p);
+			glUniform1fv(location, 1, (GLfloat*)p);
 			break;
 		case 2:
-			glUniform2fv(location, type.numRows, (GLfloat*)p);
+			glUniform2fv(location, 1, (GLfloat*)p);
 			break;
 		case 3:
-			glUniform3fv(location, type.numRows, (GLfloat*)p);
+			glUniform3fv(location, 1, (GLfloat*)p);
 			break;
 		case 4:
-			glUniform4fv(location, type.numRows, (GLfloat*)p);
+			glUniform4fv(location, 1, (GLfloat*)p);
 			break;
 		default:
 			LogF("Field numComponents must be in the [1,4] range");

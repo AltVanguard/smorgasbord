@@ -340,9 +340,7 @@ void Smorgasbord::RasterizationShader::SetSource(
 				outputStartPos - stageTypeEndPos);
 			
 			stageSource << "\n""out " << outputBlockName << " {"
-				<< outputBlock << "} "
-				<< (stageType == RasterizationStage::Geometry ? "o[]" : "o")
-				<< ";";
+				<< outputBlock << "} o;";
 			
 			stageSource << mainSource.substr(
 				outputBlockEndPos + 1,
