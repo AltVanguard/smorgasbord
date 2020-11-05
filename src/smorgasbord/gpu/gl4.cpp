@@ -962,19 +962,20 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 		"Compile errors ({0} stage):\n",
 		GetShaderTypeString((GLenum)stageType));
 	
-	int sourceInfoLogLength = 0;
-	glGetShaderiv(sourceID, GL_INFO_LOG_LENGTH, &sourceInfoLogLength);
-	if (sourceInfoLogLength > 0)
+	int programInfoLogLength = 0;
+	glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &programInfoLogLength);
+	if (programInfoLogLength > 0)
 	{
 		string infoLog;
-		infoLog.resize(sourceInfoLogLength);
+		infoLog.resize(programInfoLogLength);
 		
 		int charCount = 0;
-		glGetShaderInfoLog(
-			sourceID, sourceInfoLogLength, &charCount, &infoLog[0]);
+		glGetProgramInfoLog(
+			programID, programInfoLogLength, &charCount, &infoLog[0]);
 		
 		if (charCount > 0)
 		{
+			errorLog << "Program errors:\n";
 			errorLog << infoLog.substr(0, charCount) << endl;
 		}
 	}
@@ -990,21 +991,19 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	errorLog << source.data() << endl;
 	errorLog << "SOURCE LISTING END\n\n";
 
-	
-	int programInfoLogLength = 0;
-	glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &programInfoLogLength);
-	if (programInfoLogLength > 0)
+	int sourceInfoLogLength = 0;
+	glGetShaderiv(sourceID, GL_INFO_LOG_LENGTH, &sourceInfoLogLength);
+	if (sourceInfoLogLength > 0)
 	{
 		string infoLog;
-		infoLog.resize(programInfoLogLength);
+		infoLog.resize(sourceInfoLogLength);
 		
 		int charCount = 0;
-		glGetProgramInfoLog(
-			programID, programInfoLogLength, &charCount, &infoLog[0]);
+		glGetShaderInfoLog(
+			sourceID, sourceInfoLogLength, &charCount, &infoLog[0]);
 		
 		if (charCount > 0)
 		{
-			errorLog << "Program errors:\n";
 			errorLog << infoLog.substr(0, charCount) << endl;
 		}
 	}
