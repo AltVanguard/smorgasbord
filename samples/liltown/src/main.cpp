@@ -20,10 +20,13 @@ int main(int argc, char *argv[])
 	uvec2 windowSize = uvec2(1280, 720);
 	shared_ptr<MainWidget> mainWidget = make_shared<MainWidget>(windowSize);
 	
-	shared_ptr<GLWindow> mainWindow = make_shared<GLWindow>();
-	mainWindow->Init(argc, argv, windowSize, "Lil Town");
-	mainWidget->Setup(mainWindow, mainWindow->GetGL4Device());
-	mainWindow->EnterMainLoop(mainWidget);
+	shared_ptr<GLWindow> mainWindow
+		= make_shared<GLWindow>(windowSize, "Lil Town");
+	mainWidget->Setup(mainWindow->GetGL4Device());
+		mainWindow->EnterMainLoop(
+			[mainWidget](){ mainWidget->Draw(); },
+			[mainWidget](SDL_Event windowEvent){
+				mainWidget->HandleEvent(windowEvent); });
 	
 	return 0;
 }

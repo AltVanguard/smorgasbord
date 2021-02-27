@@ -106,11 +106,8 @@ MainWidget::MainWidget(ivec2 logicalSize)
 MainWidget::~MainWidget()
 { }
 
-void MainWidget::Setup(
-	shared_ptr<Window> window,
-	shared_ptr<Device> device)
+void MainWidget::Setup(shared_ptr<Device> device)
 {
-	(void)window;
 	internal = make_unique<MainWidget::Internal>(dataRM, device);
 	Internal &m = *internal;
 	

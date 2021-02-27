@@ -1,7 +1,7 @@
 #ifndef SMORGASBORD_GLWINDOW_HPP
 #define SMORGASBORD_GLWINDOW_HPP
 
-#include "window.hpp"
+#include <smorgasbord/window/window.hpp>
 
 using namespace std;
 using namespace glm;
@@ -10,22 +10,31 @@ namespace Smorgasbord {
 
 class Device;
 
-class GLWindow : public Window
+struct SdlGLContextDeleter
 {
-	SDL_GLContext openglContext;
+	void operator() (SDL_GLContext context)
+	{
+		SDL_GL_DeleteContext(context);
+	}
+};
+
+class GLWindow
+{
+	uvec2 windowSize;
+
+	unique_ptr<SDL_Window, SdlWindowDeleter> window;
+	unique_ptr<remove_pointer_t<SDL_GLContext>, SdlGLContextDeleter>
+		glContext;
 	
 public:
-	virtual void Init(
-		int argc,
-		char *argv[],
-		uvec2 windowSize,
-		const string &title) override;
+	GLWindow(uvec2 _windowSize, const string &title);
+	virtual ~GLWindow();
+	
+	void EnterMainLoop(
+		std::function<void()> onDraw,
+		std::function<void(SDL_Event windowEvent)> onEvent);
 	
 	shared_ptr<Device> GetGL4Device();
-	
-protected:
-	virtual void HandleEvent(SDL_Event windowEvent) override;
-	virtual void CleanupLibs() override;
 };
 
 }

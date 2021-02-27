@@ -66,18 +66,14 @@ static void ShowDebugOutput(
 
 #endif
 
-void Smorgasbord::GLWindow::Init(
-	int argc, char *argv[], uvec2 windowSize, const string &title)
+GLWindow::GLWindow(uvec2 _windowSize, const string &title)
+	: windowSize(_windowSize)
 {
-	(void)argc;
-	(void)argv;
-	this->windowSize = windowSize;
-
 	// Init SDL
 	
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		LogF("Cannot init SDL");
+		LogE("Cannot init SDL");
 	}
 	
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -94,20 +90,15 @@ void Smorgasbord::GLWindow::Init(
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
 	
-	window = SDL_CreateWindow(
+	window = decltype(window){ SDL_CreateWindow(
 			title.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			windowSize.x, windowSize.y,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE) };
 	
-	if (!window)
-	{
-		string errorMessage = string("SDL Error: ") + SDL_GetError();
-		SDL_Quit();
-		LogF(errorMessage);
-	}
+	AssertE(window, string("SDL Error: ") + SDL_GetError());
 	
-	openglContext = SDL_GL_CreateContext(window);
+	glContext = decltype(glContext){ SDL_GL_CreateContext(window.get()) };
 	
 	// Init GLEW
 	
@@ -128,34 +119,41 @@ void Smorgasbord::GLWindow::Init(
 	//SDL_GL_SetSwapInterval(1); // TODO: provide setting to enable/disable}
 }
 
-shared_ptr<Device> GLWindow::GetGL4Device()
+GLWindow::~GLWindow()
 {
-	return make_shared<SDLGL4Device>(this->window);
-}
-
-void Smorgasbord::GLWindow::CleanupLibs()
-{
-	SDL_GL_DeleteContext(openglContext);
-	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
 
-void Smorgasbord::GLWindow::HandleEvent(SDL_Event windowEvent)
+shared_ptr<Device> GLWindow::GetGL4Device()
 {
-	switch (windowEvent.type)
+	return make_shared<SDLGL4Device>(this->window.get());
+}
+
+void GLWindow::EnterMainLoop(
+	std::function<void()> onDraw,
+	std::function<void(SDL_Event windowEvent)> onEvent)
+{
+	bool quitSignaled = false;
+	while (!quitSignaled)
 	{
-	case SDL_WINDOWEVENT:
-		switch (windowEvent.window.event)
+		onDraw();
+		
+		SDL_Event windowEvent;
+		while(SDL_PollEvent(&windowEvent))
 		{
-		case SDL_WINDOWEVENT_RESIZED:
-			windowSize.x = windowEvent.window.data1;
-			windowSize.y = windowEvent.window.data2;
-			glViewport(0, 0, windowSize.x, windowSize.y);
-			return;
+			onEvent(windowEvent);
+			
+			if (windowEvent.type == SDL_QUIT)
+			{
+				quitSignaled = true;
+			}
+			else if (windowEvent.type == SDL_WINDOWEVENT
+				&& windowEvent.window.event == SDL_WINDOWEVENT_RESIZED)
+			{
+				windowSize.x = windowEvent.window.data1;
+				windowSize.y = windowEvent.window.data2;
+				glViewport(0, 0, windowSize.x, windowSize.y);
+			}
 		}
-		break;
 	}
-	
-	// Handled events should have return'd by now
-	Window::HandleEvent(windowEvent);
 }

@@ -6,7 +6,6 @@
 #include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/timer.hpp>
 #include <smorgasbord/window/framescheduler.hpp>
-#include <smorgasbord/window/widget.hpp>
 
 #include <SDL.h>
 #include <glm/glm.hpp>
@@ -19,7 +18,7 @@ using namespace std;
 using namespace glm;
 using namespace Smorgasbord;
 
-class MainWidget : public Widget
+class MainWidget
 {
 	struct Internal;
 	unique_ptr<Internal> internal;
@@ -31,11 +30,10 @@ public:
 	~MainWidget();
 	
 public:
-	void Setup(shared_ptr<Window> window, shared_ptr<Device> device);
+	void Setup(shared_ptr<Device> device);
 	
-	// Widget interface
-	virtual void Draw() override;
-	virtual void HandleEvent(SDL_Event windowEvent) override;
+	void Draw();
+	void HandleEvent(SDL_Event windowEvent);
 	
 private:
 	void Render();

@@ -1,83 +1,52 @@
 #include "window.hpp"
 
 #include "framescheduler.hpp"
-#include "widget.hpp"
 
 #include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/timer.hpp>
 
 #include <iostream>
 
-void Smorgasbord::Window::Init(
-	int argc, char *argv[], uvec2 windowSize, const string &title)
+Smorgasbord::Window::Window(uvec2 _windowSize, const string &title)
+	: windowSize(_windowSize)
 {
-	(void)argc;
-	(void)argv;
-	this->windowSize = windowSize;
-	
-	// Init SDL
-	
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		LogF("Cannot init SDL");
+		LogE("Cannot init SDL");
 	}
 	
-	window = SDL_CreateWindow(
+	window = decltype(window){ SDL_CreateWindow(
 			title.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			windowSize.x, windowSize.y,
-			SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+			SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE) };
 	
-	if (!window)
-	{
-		string errorMessage = string("SDL Error: ") + SDL_GetError();
-		SDL_Quit();
-		LogF(errorMessage);
-	}
+	AssertE(window, string("SDL Error: ") + SDL_GetError());
 }
 
-void Smorgasbord::Window::EnterMainLoop(shared_ptr<Widget> mainWidget)
+Smorgasbord::Window::~Window()
 {
-	try
-	{
-		while (!quitSignaled)
-		{
-			mainWidget->Draw();
-			
-			SDL_Event windowEvent;
-			while(SDL_PollEvent(&windowEvent))
-			{
-				// Handle widget events
-				mainWidget->HandleEvent(windowEvent);
-				
-				HandleEvent(windowEvent);
-			}
-		}
-		
-		CleanupLibs();
-	}
-	catch (exception& e)
-	{
-		CleanupLibs();
-		
-		cout << "Fatal exception thrown" << endl;
-		assert(false);
-		throw e;
-	}
-}
-
-void Smorgasbord::Window::CleanupLibs()
-{
-	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
 
-void Smorgasbord::Window::HandleEvent(SDL_Event windowEvent)
+void Smorgasbord::Window::EnterMainLoop(
+	std::function<void()> onDraw,
+	std::function<void(SDL_Event windowEvent)> onEvent)
 {
-	switch (windowEvent.type)
+	bool quitSignaled = false;
+	while (!quitSignaled)
 	{
-	case SDL_QUIT:
-		quitSignaled = true;
-		return;
+		onDraw();
+		
+		SDL_Event windowEvent;
+		while(SDL_PollEvent(&windowEvent))
+		{
+			onEvent(windowEvent);
+			
+			if (windowEvent.type == SDL_QUIT)
+			{
+				quitSignaled = true;
+			}
+		}
 	}
 }
