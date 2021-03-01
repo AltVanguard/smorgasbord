@@ -1201,7 +1201,8 @@ void GL4CommandBuffer::SetPipeline(
 	isFirstRun = false;
 }
 
-void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
+void GL4CommandBuffer::Draw(
+	shared_ptr<Buffer> _vertexBuffer,
 	IndexBufferRef _indexBuffer,
 	uint32_t startIndex,
 	uint32_t numVertices,
@@ -1242,19 +1243,16 @@ void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
 		GLuint vao = vaoResult->second;
 		glBindVertexArray(vao);
 	}
-	else if (key.vertexBufferID == 0 && key.indexBufferID == 0)
-	{
-		/// We don't need a VAO to draw if we don't have geometry to bind.
-		/// We can still invoke the pipeline and generate geometry in
-		/// vertex shader for example
-		vaos.emplace(key, 0);
-		glBindVertexArray(0);
-	}
 	else // cache new VAO
 	{
 		GLuint vao = 0;
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+		
+		/// We need to bind an VAO even if we don't have geometry to bind.
+		/// see: https://www.khronos.org/opengl/wiki/Vertex_Rendering
+		/// In that case, we don't enable any buffers, but still can invoke
+		/// the pipeline and generate geometry in vertex shader
 		
 		if (key.vertexBufferID != 0)
 		{
@@ -1330,8 +1328,8 @@ void GL4CommandBuffer::Draw(shared_ptr<Buffer> _vertexBuffer,
 			GetPrimitiveTopology(geometryLayout.primitiveType),
 			static_cast<GLsizei>(numVertices),
 			indexBuffer.dataType,
-			static_cast<uint8_t*>(nullptr) + 
-				startIndex * GetIndexDataTypeSize(_indexBuffer.dataType),
+			reinterpret_cast<char*>(startIndex *
+				GetIndexDataTypeSize(_indexBuffer.dataType)),
 			numInstances
 			);
 	}
@@ -1450,7 +1448,7 @@ GLuint GL4FrameBuffer::GetID()
 
 void Smorgasbord::GL4FrameBuffer::Use()
 {
-	// TODO: check if already bound
+	// TODO: check if already bound in debug
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 }
 
