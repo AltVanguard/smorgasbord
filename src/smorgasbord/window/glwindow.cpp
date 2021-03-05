@@ -4,41 +4,11 @@
 #include <smorgasbord/util/log.hpp>
 #include <smorgasbord/util/timer.hpp>
 
-#include <GL/glew.h>
+#include <smorgasbord/gpu/gl4_loader.hpp>
 
 #include <iostream>
 
 using namespace Smorgasbord;
-
-class SDLGL4Queue : public GL4Queue
-{
-	SDL_Window *window = nullptr;
-	
-public:
-	SDLGL4Queue(SDL_Window *_window)
-		: window(_window)
-	{ }
-	
-	virtual void Present() override
-	{
-		SDL_GL_SwapWindow(window);
-	}
-};
-
-class SDLGL4Device : public GL4Device
-{
-	SDL_Window *window = nullptr;
-	
-public:
-	SDLGL4Device(SDL_Window *_window)
-		: window(_window)
-	{ }
-	
-	virtual shared_ptr<Queue> GetDisplayQueue() override
-	{
-		return make_shared<SDLGL4Queue>(this->window);
-	}
-};
 
 #ifdef WIN32
 
@@ -66,6 +36,43 @@ static void ShowDebugOutput(
 
 #endif
 
+class SDLGL4Queue : public GL4Queue
+{
+	SDL_Window *window = nullptr;
+	
+public:
+	SDLGL4Queue(SDL_Window *_window)
+		: window(_window)
+	{ }
+	
+	virtual void Present() override
+	{
+		SDL_GL_SwapWindow(window);
+	}
+};
+
+class SDLGL4Device : public GL4Device
+{
+	SDL_Window *window = nullptr;
+	SDL_GLContext context = nullptr;
+	
+public:
+	SDLGL4Device(SDL_Window *_window, SDL_GLContext _context)
+		: window(_window)
+		, context(_context)
+	{ }
+	
+	virtual shared_ptr<Queue> GetDisplayQueue() override
+	{
+		return make_shared<SDLGL4Queue>(this->window);
+	}
+	
+	void MakeCurrent()
+	{
+		SDL_GL_MakeCurrent(window, context);
+	}
+};
+
 GLWindow::GLWindow(uvec2 _windowSize, const string &title)
 	: windowSize(_windowSize)
 {
@@ -76,7 +83,7 @@ GLWindow::GLWindow(uvec2 _windowSize, const string &title)
 		LogE("Cannot init SDL");
 	}
 	
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	//SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(
@@ -86,7 +93,7 @@ GLWindow::GLWindow(uvec2 _windowSize, const string &title)
 	//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	
 #if 1 //defined(DEBUG)
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
 	
 	window = decltype(window){ SDL_CreateWindow(
@@ -99,23 +106,10 @@ GLWindow::GLWindow(uvec2 _windowSize, const string &title)
 	
 	glContext = decltype(glContext){ SDL_GL_CreateContext(window.get()) };
 	
-	// Init GLEW
+	device = make_shared<SDLGL4Device>(window.get(), glContext.get());
+	device->MakeCurrent();
 	
-	// If it's false, some opengl functions cause segmentation fault
-	glewExperimental = GL_TRUE;
-	
-	GLenum err = glewInit();
-	if (err != GLEW_OK)
-	{
-		LogF("Cannot init GLEW: {0}", (const char*)glewGetErrorString(err));
-	}
-	
-	// Setup GL
-	
-	glDebugMessageCallback(ShowDebugOutput, NULL);
-	LogI((const char*)glGetString(GL_VERSION));
-	
-	//SDL_GL_SetSwapInterval(1); // TODO: provide setting to enable/disable}
+	//SDL_GL_SetSwapInterval(1); // TODO: provide setting to enable/disable
 }
 
 GLWindow::~GLWindow()
@@ -125,7 +119,7 @@ GLWindow::~GLWindow()
 
 shared_ptr<Device> GLWindow::GetGL4Device()
 {
-	return make_shared<SDLGL4Device>(this->window.get());
+	return device;
 }
 
 void GLWindow::EnterMainLoop(
@@ -151,7 +145,9 @@ void GLWindow::EnterMainLoop(
 			{
 				windowSize.x = windowEvent.window.data1;
 				windowSize.y = windowEvent.window.data2;
-				glViewport(0, 0, windowSize.x, windowSize.y);
+				device->GetLoader().glViewport(
+					0, 0, windowSize.x, windowSize.y
+					);
 			}
 		}
 	}

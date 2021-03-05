@@ -2,8 +2,7 @@
 #define SMORGASBORD_GL4_BACKEND_H
 
 #include <smorgasbord/gpu/gpuapi.hpp>
-
-#include <GL/glew.h>
+#include <smorgasbord/gpu/gl4_loader.hpp>
 
 #include <unordered_map>
 #include <set>
@@ -24,11 +23,13 @@ class GL4Device;
 
 class GL4Buffer : public Buffer
 {
+	const GL4Loader &gl;
 	GLuint nativeDeviceBufferID = 0;
-	void *mappedData = nullptr;// uint8_t
+	void *mappedData = nullptr;
 	
 public:
 	GL4Buffer(
+		GL4Device& device,
 		BufferType bufferType, 
 		BufferUsageType accessType, 
 		BufferUsageFrequency accessFrequency, 
@@ -80,15 +81,14 @@ struct GL4TextureFormat
 class GL4Texture : public Texture
 {
 private:
+	const GL4Loader &gl;
 	GLuint id = 0;
 	int bindSlot = -1;
 	
 public:
-	GL4Texture(uvec2 imageSize, TextureFormat textureFormat);
+	GL4Texture(
+		GL4Device& device, uvec2 imageSize, TextureFormat textureFormat);
 	~GL4Texture();
-	
-	void Init();
-	void Free();
 	
 	void Bind(int slot);
 	void Unbind();
@@ -131,6 +131,7 @@ struct GL4BindCommand
 class GL4RasterizationShader : public RasterizationShader
 {
 private:
+	const GL4Loader &gl;
 	TextureSamplerSet *samplers = nullptr;
 	map<ParameterBuffer*, GL4BindCommand> parameterBuffers;
 	map<Buffer*, string> buffers;
@@ -143,9 +144,13 @@ private:
 	bool isCompiled = false;
 	
 public:
-	GL4RasterizationShader(string name = "");
+	GL4RasterizationShader(GL4Device& device, string name = "");
 	
 	void ResetBindings();
+	void SetConstantField(
+		uint32_t location,
+		const VariableType &type,
+		void *p);
 	void ApplyBindings(GL4Device *device);
 	void Compile(const Pass &pass, const GeometryLayout &geometryLayout);
 	void PrintErrorLog(GLuint sourceID, GLuint programID);
@@ -203,9 +208,11 @@ public:
 
 class GL4CommandBuffer : public CommandBuffer
 {
+private:
+	GL4Device& device;
+	const GL4Loader &gl;
 	bool isFirstRun = true;
 	unordered_map<GL4VAOKey, GLuint, GL4VAOKeyHash> vaos;
-	GL4Device *device = nullptr; // TODO: change to shared_ptr
 	shared_ptr<IGL4FrameBuffer> frameBuffer;
 	const Pass *passAddress = nullptr;
 	shared_ptr<GL4RasterizationShader> shader;
@@ -213,7 +220,7 @@ class GL4CommandBuffer : public CommandBuffer
 	RasterizationPipelineState pipelineState;
 	
 public:
-	GL4CommandBuffer(GL4Device *device);
+	GL4CommandBuffer(GL4Device& device);
 	~GL4CommandBuffer();
 	
 	// CommandBuffer interface
@@ -234,10 +241,11 @@ public:
 class GL4FrameBuffer : public IGL4FrameBuffer
 {
 private:
+	const GL4Loader &gl;
 	GLuint id = 0;
 	
 public:
-	GL4FrameBuffer();
+	GL4FrameBuffer(GL4Device& device);
 	~GL4FrameBuffer();
 	
 	bool IsReady(); // TODO?: add to IGL4FrameBuffer
@@ -256,7 +264,11 @@ public:
 
 class GL4SystemFrameBuffer : public IGL4FrameBuffer
 {
+	const GL4Loader &gl;
+	
 public:
+	GL4SystemFrameBuffer(GL4Device& device);
+	
 	// FrameBuffer interface
 	virtual void SetColor(
 		uint32_t attachmentIndex,
@@ -274,7 +286,7 @@ class GL4SwapChain : public SwapChain
 	vector<shared_ptr<FrameBuffer>> frameBuffers;
 	
 public:
-	GL4SwapChain();
+	GL4SwapChain(GL4Device& device);
 	
 	// SwapChain interface
 	virtual vector<shared_ptr<FrameBuffer>> GetFrameBuffers() override;
@@ -294,9 +306,15 @@ public:
 class GL4Device : public Device
 {
 protected:
+	GL4Loader gl;
 	DeviceInfo deviceInfo;
 	
 public:
+	const GL4Loader &GetLoader() const
+	{
+		return gl;
+	}
+
 	// Device interface
 	virtual const DeviceInfo &GetDeviceInfo() const override;
 	virtual vector<shared_ptr<Queue>> GetQueues() override;

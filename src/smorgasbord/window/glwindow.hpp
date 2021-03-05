@@ -6,6 +6,8 @@
 using namespace std;
 using namespace glm;
 
+class SDLGL4Device;
+
 namespace Smorgasbord {
 
 class Device;
@@ -25,6 +27,7 @@ class GLWindow
 	unique_ptr<SDL_Window, SdlWindowDeleter> window;
 	unique_ptr<remove_pointer_t<SDL_GLContext>, SdlGLContextDeleter>
 		glContext;
+	shared_ptr<SDLGL4Device> device;
 	
 public:
 	GLWindow(uvec2 _windowSize, const string &title);

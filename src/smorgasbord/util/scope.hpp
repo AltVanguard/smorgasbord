@@ -12,13 +12,6 @@ struct IScope
 	virtual ~IScope() = default;
 };
 
-///struct IScoped
-///{
-///	virtual ~IScoped() = default;
-///	
-///	virtual unique_ptr<IScope> GetScope() = 0;
-///};
-
 template<typename T>
 class UseScope : public IScope
 {
@@ -106,6 +99,22 @@ public:
 	}
 };
 
+class OnExitScope
+{
+private:
+	const std::function<void()> onExit;
+	
+public:
+	OnExitScope(std::function<void()> &&_onExit) noexcept(true)
+		: onExit(_onExit)
+	{ }
+	
+	~OnExitScope()
+	{
+		this->onExit();
+	}
+};
+
 }
 
 #define SMORGASBORD_CONCATTOKENS(x, y) x##y
@@ -113,5 +122,6 @@ public:
 #define SMORGASBORD_CREATESCOPE(scopeType, targetType) unique_ptr< scopeType<targetType> >(new scopeType<targetType>(*this));
 #define Scope(target, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__);
 #define ScopeAlias(target, alias, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__); auto &alias = target;
+#define ScopeExit(onExit) OnExitScope SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__)(onExit);
 
 #endif // SCOPE_HPP

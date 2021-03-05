@@ -10,9 +10,6 @@ add_subdirectory(
 	"${DEP_SRC_DIRECTORY}/fmt-4.1.0"
 	${CMAKE_CURRENT_BINARY_DIR}/fmt)
 add_subdirectory(
-	"${DEP_SRC_DIRECTORY}/glew-2.0.0"
-	${CMAKE_CURRENT_BINARY_DIR}/glew)
-add_subdirectory(
 	"${DEP_SRC_DIRECTORY}/lodepng"
 	${CMAKE_CURRENT_BINARY_DIR}/lodepng)
 option(SDL_SHARED "" OFF)
@@ -32,6 +29,7 @@ set(PRIVATE_HEADERS
 file(GLOB_RECURSE PUBLIC_HEADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.inl"
 )
 
 file(GLOB_RECURSE SOURCES
@@ -45,7 +43,6 @@ add_library(${PROJECT_NAME} STATIC
 	${SOURCES}
 )
 
-find_package(OpenGL REQUIRED)
 #find_package(Vulkan REQUIRED)
 
 if (MINGW)
@@ -58,15 +55,13 @@ target_link_libraries(${PROJECT_NAME}
 		lodepng
 		fmt
 		SDL2main SDL2-static
-		GLEW
-		${OPENGL_LIBRARIES}
 #		${Vulkan_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC "src/"
+	PUBLIC "thirdparty/"
 	PUBLIC "${DEP_SRC_DIRECTORY}/fmt-4.1.0"
-	PUBLIC "${DEP_SRC_DIRECTORY}/glew-2.0.0/include"
 	PUBLIC "${DEP_SRC_DIRECTORY}/glm"
 	PUBLIC "${DEP_SRC_DIRECTORY}/lodepng"
 	PUBLIC "${DEP_SRC_DIRECTORY}/SDL2/include"
@@ -76,7 +71,6 @@ target_include_directories(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
 	PUBLIC
-		GLEW_STATIC
 		GLM_SWIZZLE
 		NOMINMAX # windows.h interferes with GLM under MSVC if not defined
 )

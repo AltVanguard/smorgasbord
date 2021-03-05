@@ -3,6 +3,7 @@
 #include <smorgasbord/image/image.hpp>
 #include <smorgasbord/util/log.hpp>
 
+#include <cstring>
 #include <array>
 
 /*
@@ -37,18 +38,6 @@ STREAM:  The user will be changing the data after every use.
 */
 
 using namespace Smorgasbord;
-
-inline void SetIsEnabled(GLenum key, bool value)
-{
-	if (value)
-	{
-		glEnable(key);
-	}
-	else
-	{
-		glDisable(key);
-	}
-}
 
 inline GLenum GetBufferType(Smorgasbord::BufferType type)
 {
@@ -245,18 +234,16 @@ format is stored as. The following suffixes are used:
 	switch (format)
 	{
 	case TextureFormat::RGBA_8_8_8_8_UNorm:
-		return GL4TextureFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		return { GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE };
 	case TextureFormat::R_16_UNorm:
-		return GL4TextureFormat(GL_R16, GL_R, GL_UNSIGNED_SHORT);
+		return { GL_R16, GL_RED, GL_UNSIGNED_SHORT };
 	case TextureFormat::Depth_24_UNorm:
-		return GL4TextureFormat(
-			GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
+		return { GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT };
 	case TextureFormat::Depth_32_UNorm:
-		return GL4TextureFormat(
-			GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
+		return { GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT };
 	}
 	
-	return GL4TextureFormat(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+	return { GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE };
 }
 
 inline GLenum GetSamplerFilter(SamplerFilter filter)
@@ -274,10 +261,11 @@ inline GLenum GetSamplerFilter(SamplerFilter filter)
 
 inline GLenum GetSamplerWrap(SamplerWrap wrap)
 {
+	// TODO: GL_MIRRORED_REPEAT, GL_CLAMP_TO_BORDER, GL_MIRROR_CLAMP_TO_EDGE
 	switch (wrap)
 	{
 	case SamplerWrap::Clamp:
-		return GL_CLAMP;
+		return GL_CLAMP_TO_EDGE;
 	case SamplerWrap::Repeat:
 		return GL_REPEAT;
 	case SamplerWrap::MirroredRepeat:
@@ -333,21 +321,23 @@ inline string GetShaderTypeString(GLenum stageType)
 }
 
 Smorgasbord::GL4Buffer::GL4Buffer(
+	GL4Device& device,
 	BufferType bufferType,
 	BufferUsageType accessType,
 	BufferUsageFrequency accessFrequency,
 	int size)
 	: Buffer(bufferType, accessType, accessFrequency, size)
+	, gl(device.GetLoader())
 {
 	const GLenum nativeBufferType = ::GetBufferType(this->bufferType);
 	const GLenum nativeUsageSpecifier =
 		GetBufferUsageSpecifier(this->accessType, this->accessFrequency);
-	glGenBuffers(1, &(this->nativeDeviceBufferID));
-	glBindBuffer(nativeBufferType, this->nativeDeviceBufferID);
-	glBufferData(nativeBufferType, size, NULL, nativeUsageSpecifier);
+	gl.glGenBuffers(1, &(this->nativeDeviceBufferID));
+	gl.glBindBuffer(nativeBufferType, this->nativeDeviceBufferID);
+	gl.glBufferData(nativeBufferType, size, NULL, nativeUsageSpecifier);
 	
 #ifdef SMORGASBORD_GL4_UNBIND
-	glBindBuffer(nativeBufferType, 0);
+	gl.glBindBuffer(nativeBufferType, 0);
 #endif
 }
 
@@ -362,9 +352,9 @@ void Smorgasbord::GL4Buffer::Map(MappedDataAccessType mapAccessType)
 	const GLenum nativeBufferType = ::GetBufferType(this->bufferType);
 	const GLenum nativeMappedDataAccessType =
 		GetMappedDataAccessType(mapAccessType);
-	glBindBuffer(nativeBufferType, nativeDeviceBufferID);
+	gl.glBindBuffer(nativeBufferType, nativeDeviceBufferID);
 	mappedData = reinterpret_cast<uint8_t*>(
-			glMapBuffer(nativeBufferType, nativeMappedDataAccessType));
+			gl.glMapBuffer(nativeBufferType, nativeMappedDataAccessType));
 }
 
 void Smorgasbord::GL4Buffer::Unmap()
@@ -372,26 +362,18 @@ void Smorgasbord::GL4Buffer::Unmap()
 	mappedData = nullptr;
 	
 	const GLenum nativeBufferType = ::GetBufferType(this->bufferType);
-	glUnmapBuffer(nativeBufferType);
+	gl.glUnmapBuffer(nativeBufferType);
 	
 #ifdef SMORGASBORD_GL4_UNBIND
-	glBindBuffer(nativeBufferType, 0);
+	gl.glBindBuffer(nativeBufferType, 0);
 #endif
 }
 
 
-Smorgasbord::GL4Texture::GL4Texture(uvec2 _size, TextureFormat _format)
+Smorgasbord::GL4Texture::GL4Texture(
+	GL4Device& device, uvec2 _size, TextureFormat _format)
 	: Texture(_size, _format)
-{
-	Init();
-}
-
-Smorgasbord::GL4Texture::~GL4Texture()
-{
-	Free();
-}
-
-void Smorgasbord::GL4Texture::Init()
+	, gl(device.GetLoader())
 {
 	if (id != 0)
 	{
@@ -409,15 +391,15 @@ void Smorgasbord::GL4Texture::Init()
 	
 	// Upload texture
 	
-	glGenTextures(1, &id);
+	gl.glGenTextures(1, &id);
 	
 	Bind(0);
 	
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
 	/// OpenGL 3.2+ does not accept color component count as internalFormat,
 	/// must use one of the predifined constants
-	glTexImage2D(
+	gl.glTexImage2D(
 		GL_TEXTURE_2D, 0,
 		nativeFormat.internalFormat,
 		size.x, size.y,
@@ -435,10 +417,10 @@ void Smorgasbord::GL4Texture::Init()
 	/// Further info:
 	/// http://www.opengl.org/wiki/
 	/// Common_Mistakes#Creating_a_complete_texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	/// GL_TEXTURE_MAX_LEVEL is the index of the highest level,
 	/// not the number of level
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	SetTextureFilter(SamplerFilter::Nearest, SamplerFilter::Nearest);
 	SetTextureWrap(
 		SamplerWrap::Clamp, SamplerWrap::Clamp, SamplerWrap::Clamp);
@@ -446,7 +428,7 @@ void Smorgasbord::GL4Texture::Init()
 	Unbind();
 }
 
-void Smorgasbord::GL4Texture::Free()
+Smorgasbord::GL4Texture::~GL4Texture()
 {
 	if (id == 0)
 	{
@@ -454,7 +436,7 @@ void Smorgasbord::GL4Texture::Free()
 		return;
 	}
 	
-	glDeleteTextures(1, &id);
+	gl.glDeleteTextures(1, &id);
 	id = 0;
 }
 
@@ -464,8 +446,8 @@ void Smorgasbord::GL4Texture::Bind(int slot)
 		Unbind();
 		
 	bindSlot = slot;
-	glActiveTexture(GL_TEXTURE0 + slot);
-	glBindTexture(GL_TEXTURE_2D, id);
+	gl.glActiveTexture(GL_TEXTURE0 + slot);
+	gl.glBindTexture(GL_TEXTURE_2D, id);
 }
 
 void Smorgasbord::GL4Texture::Unbind()
@@ -476,8 +458,8 @@ void Smorgasbord::GL4Texture::Unbind()
 		return;
 	}
 	
-	glActiveTexture(GL_TEXTURE0 + bindSlot);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	gl.glActiveTexture(GL_TEXTURE0 + bindSlot);
+	gl.glBindTexture(GL_TEXTURE_2D, 0);
 	bindSlot = -1;
 }
 
@@ -491,9 +473,9 @@ void Smorgasbord::GL4Texture::SetTextureFilter(
 	}
 	
 	//glActiveTexture(GL_TEXTURE0 + bindSlot);
-	glTexParameteri(
+	gl.glTexParameteri(
 		GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GetSamplerFilter(minify));
-	glTexParameteri(
+	gl.glTexParameteri(
 		GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GetSamplerFilter(magnify));
 }
 
@@ -507,9 +489,9 @@ void Smorgasbord::GL4Texture::SetTextureWrap(
 	}
 	
 	//glActiveTexture(GL_TEXTURE0 + bindSlot);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GetSamplerWrap(s));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GetSamplerWrap(t));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GetSamplerWrap(r));
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GetSamplerWrap(s));
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GetSamplerWrap(t));
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GetSamplerWrap(r));
 }
 
 void Smorgasbord::GL4Texture::Upload(Smorgasbord::Image &image)
@@ -524,7 +506,7 @@ void Smorgasbord::GL4Texture::Upload(Smorgasbord::Image &image)
 	
 	GL4TextureFormat nativeFormat = GetTextureFormat(format);
 	
-	glTexSubImage2D(
+	gl.glTexSubImage2D(
 		GL_TEXTURE_2D, 0,
 		0, 0,
 		size.x, size.y,
@@ -543,7 +525,7 @@ void Smorgasbord::GL4Texture::Verify(Smorgasbord::Image &image)
 	
 	GL4TextureFormat nativeFormat = GetTextureFormat(format);
 	
-	glGetTexImage(
+	gl.glGetTexImage(
 		GL_TEXTURE_2D, 0,
 		nativeFormat.format, nativeFormat.dataType,
 		returnedImage.data()
@@ -575,7 +557,7 @@ shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
 	
 	GL4TextureFormat nativeFormat = GetTextureFormat(format);
 	
-	glGetTexImage(
+	gl.glGetTexImage(
 		GL_TEXTURE_2D, 0,
 		nativeFormat.format, nativeFormat.dataType,
 		image->data.data());
@@ -585,8 +567,10 @@ shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
 	return image;
 }
 
-GL4RasterizationShader::GL4RasterizationShader(string name)
+GL4RasterizationShader::GL4RasterizationShader(
+	GL4Device& device, string name)
 	: RasterizationShader(name)
+	, gl(device.GetLoader())
 { }
 
 void GL4RasterizationShader::ResetBindings()
@@ -594,7 +578,7 @@ void GL4RasterizationShader::ResetBindings()
 	// TODO: unset sampler bindings?
 }
 
-inline void SetConstantField(
+void GL4RasterizationShader::SetConstantField(
 	uint32_t location,
 	const VariableType &type,
 	void *p)
@@ -605,16 +589,16 @@ inline void SetConstantField(
 		switch (type.numRows)
 		{
 		case 1:
-			glUniform1fv(location, 1, (GLfloat*)p);
+			gl.glUniform1fv(location, 1, (GLfloat*)p);
 			break;
 		case 2:
-			glUniform2fv(location, 1, (GLfloat*)p);
+			gl.glUniform2fv(location, 1, (GLfloat*)p);
 			break;
 		case 3:
-			glUniform3fv(location, 1, (GLfloat*)p);
+			gl.glUniform3fv(location, 1, (GLfloat*)p);
 			break;
 		case 4:
-			glUniform4fv(location, 1, (GLfloat*)p);
+			gl.glUniform4fv(location, 1, (GLfloat*)p);
 			break;
 		default:
 			LogF("Field numComponents must be in the [1,4] range");
@@ -633,13 +617,13 @@ inline void SetConstantField(
 			switch (type.numColumns)
 			{
 			case 2:
-				glUniformMatrix2fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix2fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 3:
-				glUniformMatrix2x3fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix2x3fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 4:
-				glUniformMatrix2x4fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix2x4fv(location, 1, false, (GLfloat*)p);
 				break;
 			default:
 				LogF("Field numColumns must be in the [2,4] range");
@@ -649,13 +633,13 @@ inline void SetConstantField(
 			switch (type.numColumns)
 			{
 			case 2:
-				glUniformMatrix3x2fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix3x2fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 3:
-				glUniformMatrix3fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix3fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 4:
-				glUniformMatrix3x4fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix3x4fv(location, 1, false, (GLfloat*)p);
 				break;
 			default:
 				LogF("Field numColumns must be in the [2,4] range");
@@ -665,13 +649,13 @@ inline void SetConstantField(
 			switch (type.numColumns)
 			{
 			case 2:
-				glUniformMatrix4x2fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix4x2fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 3:
-				glUniformMatrix4x3fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix4x3fv(location, 1, false, (GLfloat*)p);
 				break;
 			case 4:
-				glUniformMatrix4fv(location, 1, false, (GLfloat*)p);
+				gl.glUniformMatrix4fv(location, 1, false, (GLfloat*)p);
 				break;
 			default:
 				LogF("Field numColumns must be in the [2,4] range");
@@ -686,6 +670,8 @@ inline void SetConstantField(
 
 void GL4RasterizationShader::ApplyBindings(GL4Device *device)
 {
+	(void)device;
+	
 	// TODO: create buffer for parameterBuffer if buffer backed
 	///for (auto &b : parameterBuffers)
 	///{
@@ -899,21 +885,21 @@ void GL4RasterizationShader::Compile(
 	for	(auto &stage : stages)
 	{
 		GLenum stageType = GetShaderStage(stage.first);
-		GLuint sourceID = glCreateShader(stageType);
+		GLuint sourceID = gl.glCreateShader(stageType);
 		string s = stage.second.str();
 		const char *sp = s.c_str();
-		glShaderSource(sourceID, 1, &sp, NULL);
+		gl.glShaderSource(sourceID, 1, &sp, NULL);
 		sourceIDs.emplace(stage.first, sourceID);
 	}
 	
-	GLuint newProgramID = glCreateProgram();
+	GLuint newProgramID = gl.glCreateProgram();
 	for (const auto &i : sourceIDs)
 	{
 		GLuint sourceID = i.second;
-		glCompileShader(sourceID);
+		gl.glCompileShader(sourceID);
 		
 		GLint compileStatus = GL_FALSE;
-		glGetShaderiv(sourceID, GL_COMPILE_STATUS, &compileStatus);
+		gl.glGetShaderiv(sourceID, GL_COMPILE_STATUS, &compileStatus);
 		if (compileStatus == GL_FALSE)
 		{
 			PrintErrorLog(sourceID, newProgramID);
@@ -921,13 +907,13 @@ void GL4RasterizationShader::Compile(
 			return;
 		}
 		
-		glAttachShader(newProgramID, sourceID);
+		gl.glAttachShader(newProgramID, sourceID);
 	}
 	
-	glLinkProgram(newProgramID);
+	gl.glLinkProgram(newProgramID);
 	
 	GLint linkStatus = GL_FALSE;
-	glGetProgramiv(newProgramID, GL_LINK_STATUS, &linkStatus);
+	gl.glGetProgramiv(newProgramID, GL_LINK_STATUS, &linkStatus);
 	if (linkStatus == GL_FALSE)
 	{
 		for (const auto &stage : stages)
@@ -955,7 +941,7 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	stringstream errorLog;
 	GLint stageType = GL_NONE;
 	
-	glGetShaderiv(sourceID, GL_SHADER_TYPE, &stageType);
+	gl.glGetShaderiv(sourceID, GL_SHADER_TYPE, &stageType);
 	
 	errorLog << fmt::format(
 		"Shader compilation failed\n"
@@ -963,14 +949,14 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 		GetShaderTypeString((GLenum)stageType));
 	
 	int programInfoLogLength = 0;
-	glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &programInfoLogLength);
+	gl.glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &programInfoLogLength);
 	if (programInfoLogLength > 0)
 	{
 		string infoLog;
 		infoLog.resize(programInfoLogLength);
 		
 		int charCount = 0;
-		glGetProgramInfoLog(
+		gl.glGetProgramInfoLog(
 			programID, programInfoLogLength, &charCount, &infoLog[0]);
 		
 		if (charCount > 0)
@@ -981,25 +967,25 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	}
 	
 	GLint sourceLength = -1;
-	glGetShaderiv(sourceID, GL_SHADER_SOURCE_LENGTH, &sourceLength);
+	gl.glGetShaderiv(sourceID, GL_SHADER_SOURCE_LENGTH, &sourceLength);
 	
 	vector<char> source(sourceLength);
 	GLsizei actualSourceLength;
-	glGetShaderSource(
+	gl.glGetShaderSource(
 		sourceID, sourceLength, &actualSourceLength, source.data());
 	errorLog << "SOURCE LISTING Retrieved source:\n";
 	errorLog << source.data() << endl;
 	errorLog << "SOURCE LISTING END\n\n";
 
 	int sourceInfoLogLength = 0;
-	glGetShaderiv(sourceID, GL_INFO_LOG_LENGTH, &sourceInfoLogLength);
+	gl.glGetShaderiv(sourceID, GL_INFO_LOG_LENGTH, &sourceInfoLogLength);
 	if (sourceInfoLogLength > 0)
 	{
 		string infoLog;
 		infoLog.resize(sourceInfoLogLength);
 		
 		int charCount = 0;
-		glGetShaderInfoLog(
+		gl.glGetShaderInfoLog(
 			sourceID, sourceInfoLogLength, &charCount, &infoLog[0]);
 		
 		if (charCount > 0)
@@ -1015,7 +1001,7 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 void GL4RasterizationShader::Use()
 {
 	AssertF(programID != 0, "Cannot use uninitialized program");
-	glUseProgram(programID);
+	gl.glUseProgram(programID);
 }
 
 void GL4RasterizationShader::Set(TextureSamplerSet &_samplers)
@@ -1077,9 +1063,11 @@ void GL4RasterizationShader::Set(
 	}
 }
 
-GL4CommandBuffer::GL4CommandBuffer(GL4Device *_device)
+GL4CommandBuffer::GL4CommandBuffer(GL4Device& _device)
+	: device(_device)
+	, gl(_device.GetLoader())
 {
-	device = _device;
+	
 }
 
 GL4CommandBuffer::~GL4CommandBuffer()
@@ -1088,7 +1076,7 @@ GL4CommandBuffer::~GL4CommandBuffer()
 	//		Probably wouldn't make much difference
 	for (pair<GL4VAOKey, GLuint> vao : vaos)
 	{
-		glDeleteVertexArrays(1, &vao.second);
+		gl.glDeleteVertexArrays(1, &vao.second);
 	}
 	vaos.clear();
 }
@@ -1127,7 +1115,7 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 		const size_t numColors = clearColors.size();
 		for (size_t i = 0; i < numColors; i++)
 		{
-			glClearBufferfv(GL_COLOR, i, &clearColors[i].x);
+			gl.glClearBufferfv(GL_COLOR, i, &clearColors[i].x);
 		}
 	}
 	
@@ -1137,7 +1125,7 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 		&& depthAttachment->GetLoadOp() == LoadOp::Clear)
 	{
 		float depthClearValue = depthAttachment->GetDepthClearValue();
-		glClearBufferfv(
+		gl.glClearBufferfv(
 			GL_DEPTH,
 			0, // must be 0 for GL_DEPTH
 			&depthClearValue);
@@ -1183,18 +1171,18 @@ void GL4CommandBuffer::SetPipeline(
 	
 	if (pipelineState.blend != _pipelineState.blend || isFirstRun)
 	{
-		SetIsEnabled(GL_BLEND, _pipelineState.blend.isEnabled);
+		gl.SetIsEnabled(GL_BLEND, _pipelineState.blend.isEnabled);
 	}
 	
 	if (pipelineState.depthTest != _pipelineState.depthTest || isFirstRun)
 	{
-		SetIsEnabled(GL_DEPTH_TEST, _pipelineState.depthTest.isEnabled);
+		gl.SetIsEnabled(GL_DEPTH_TEST, _pipelineState.depthTest.isEnabled);
 	}
 	
 	if (pipelineState.viewport != _pipelineState.viewport || isFirstRun)
 	{
 		const ivec4 &viewport = _pipelineState.viewport;
-		glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+		gl.glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
 	}
 	
 	pipelineState = _pipelineState;
@@ -1212,7 +1200,7 @@ void GL4CommandBuffer::Draw(
 	AssertF(passAddress != nullptr, "Cannot draw without a pass set");
 	shader->Compile(*passAddress, geometryLayout);
 	shader->Use();
-	shader->ApplyBindings(device);
+	shader->ApplyBindings(&device);
 	
 	// TODO: validate shader for every unique pipiline state
 	///int validationStatus = 0;
@@ -1241,13 +1229,13 @@ void GL4CommandBuffer::Draw(
 	if (vaoResult != vaos.end())
 	{
 		GLuint vao = vaoResult->second;
-		glBindVertexArray(vao);
+		gl.glBindVertexArray(vao);
 	}
 	else // cache new VAO
 	{
 		GLuint vao = 0;
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		gl.glGenVertexArrays(1, &vao);
+		gl.glBindVertexArray(vao);
 		
 		/// We need to bind an VAO even if we don't have geometry to bind.
 		/// see: https://www.khronos.org/opengl/wiki/Vertex_Rendering
@@ -1256,16 +1244,16 @@ void GL4CommandBuffer::Draw(
 		
 		if (key.vertexBufferID != 0)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->GetID());
+			gl.glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->GetID());
 			
 			for	(Attribute &attribute : geometryLayout.attributes)
 			{
-				glEnableVertexAttribArray(attribute.location);
+				gl.glEnableVertexAttribArray(attribute.location);
 				
 				switch (attribute.accessType)
 				{
 				case AttributeAccessType::Float:
-					glVertexAttribPointer(
+					gl.glVertexAttribPointer(
 						attribute.location,
 						attribute.numComponents, 
 						GetAttributeDataType(attribute.dataType),
@@ -1276,7 +1264,7 @@ void GL4CommandBuffer::Draw(
 					break;
 					
 				case AttributeAccessType::Double:
-					glVertexAttribLPointer(
+					gl.glVertexAttribLPointer(
 						attribute.location,
 						attribute.numComponents, 
 						GetAttributeDataType(attribute.dataType),
@@ -1286,7 +1274,7 @@ void GL4CommandBuffer::Draw(
 					break;
 					
 				case AttributeAccessType::Int:
-					glVertexAttribIPointer(
+					gl.glVertexAttribIPointer(
 						attribute.location,
 						attribute.numComponents, 
 						GetAttributeDataType(attribute.dataType),
@@ -1302,7 +1290,7 @@ void GL4CommandBuffer::Draw(
 		{
 			/// ELEMENT_ARRAY_BUFFER is part of VAO state. See Table 23.4
 			/// of the 4.6 Core spec or Table 6.8 of the 2.1 spec
-			glBindBuffer(
+			gl.glBindBuffer(
 				GL_ELEMENT_ARRAY_BUFFER, indexBuffer.buffer->GetID());
 		}
 		
@@ -1314,7 +1302,7 @@ void GL4CommandBuffer::Draw(
 	if (geometryLayout.primitiveType == PrimitiveTopology::PatchList 
 		&& geometryLayout.numVertsPerPatch > 3)
 	{
-		glPatchParameteri(
+		gl.glPatchParameteri(
 			GL_PATCH_VERTICES,
 			static_cast<GLint>(geometryLayout.numVertsPerPatch));
 	}
@@ -1324,7 +1312,7 @@ void GL4CommandBuffer::Draw(
 	
 	if (indexBuffer.IsValid())
 	{
-		glDrawElementsInstanced(
+		gl.glDrawElementsInstanced(
 			GetPrimitiveTopology(geometryLayout.primitiveType),
 			static_cast<GLsizei>(numVertices),
 			indexBuffer.dataType,
@@ -1335,7 +1323,7 @@ void GL4CommandBuffer::Draw(
 	}
 	else
 	{
-		glDrawArraysInstanced(
+		gl.glDrawArraysInstanced(
 			GetPrimitiveTopology(geometryLayout.primitiveType),
 			static_cast<GLint>(startIndex),
 			static_cast<GLsizei>(numVertices),
@@ -1352,22 +1340,23 @@ GL4IndexBufferRef::GL4IndexBufferRef(IndexBufferRef &_indexBuffer)
 	, dataType(GetIndexDataType(_indexBuffer.dataType))
 { }
 
-Smorgasbord::GL4FrameBuffer::GL4FrameBuffer()
+Smorgasbord::GL4FrameBuffer::GL4FrameBuffer(GL4Device& device)
+	: gl(device.GetLoader())
 {
-	glGenFramebuffers(1, &id);
+	gl.glGenFramebuffers(1, &id);
 }
 
 Smorgasbord::GL4FrameBuffer::~GL4FrameBuffer()
 {
 	if (id > 0)
 	{
-		glDeleteFramebuffers(1, &id);
+		gl.glDeleteFramebuffers(1, &id);
 	}
 }
 
 bool Smorgasbord::GL4FrameBuffer::IsReady()
 {
-	bool state = (glCheckFramebufferStatus(GL_FRAMEBUFFER)
+	bool state = (gl.glCheckFramebufferStatus(GL_FRAMEBUFFER)
 		== GL_FRAMEBUFFER_COMPLETE);
 	return state;
 }
@@ -1401,7 +1390,7 @@ void Smorgasbord::GL4FrameBuffer::SetColor(
 	
 	Use();
 	this->colorAttachments[attachementIndex] = colorTex;
-	glFramebufferTexture2D(
+	gl.glFramebufferTexture2D(
 		GL_FRAMEBUFFER,
 		GL_COLOR_ATTACHMENT0 + attachementIndex,
 		GL_TEXTURE_2D,
@@ -1431,7 +1420,7 @@ void Smorgasbord::GL4FrameBuffer::SetDepth(
 	
 	Use();
 	this->depthAttachment = depthTex;
-	glFramebufferTexture2D(
+	gl.glFramebufferTexture2D(
 		GL_FRAMEBUFFER,
 		GL_DEPTH_ATTACHMENT,
 		GL_TEXTURE_2D,
@@ -1449,7 +1438,7 @@ GLuint GL4FrameBuffer::GetID()
 void Smorgasbord::GL4FrameBuffer::Use()
 {
 	// TODO: check if already bound in debug
-	glBindFramebuffer(GL_FRAMEBUFFER, id);
+	gl.glBindFramebuffer(GL_FRAMEBUFFER, id);
 }
 
 void GL4FrameBuffer::SetDrawBuffers()
@@ -1461,7 +1450,13 @@ void GL4FrameBuffer::SetDrawBuffers()
 			GL_COLOR_ATTACHMENT0 + color.first);
 	}
 	
-	glDrawBuffers((GLsizei)buffers.size(), buffers.data());
+	gl.glDrawBuffers((GLsizei)buffers.size(), buffers.data());
+}
+
+GL4SystemFrameBuffer::GL4SystemFrameBuffer(GL4Device& device)
+	: gl(device.GetLoader())
+{
+	
 }
 
 void GL4SystemFrameBuffer::SetColor(
@@ -1486,17 +1481,17 @@ GLuint GL4SystemFrameBuffer::GetID()
 
 void GL4SystemFrameBuffer::Use()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	gl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GL4SystemFrameBuffer::SetDrawBuffers()
 {
-	glDrawBuffer(GL_BACK);
+	gl.glDrawBuffer(GL_BACK);
 }
 
-GL4SwapChain::GL4SwapChain()
+GL4SwapChain::GL4SwapChain(GL4Device& device)
 {
-	frameBuffers.push_back(make_shared<GL4SystemFrameBuffer>());
+	frameBuffers.push_back(make_shared<GL4SystemFrameBuffer>(device));
 }
 
 vector<shared_ptr<FrameBuffer> > GL4SwapChain::GetFrameBuffers()
@@ -1547,23 +1542,23 @@ shared_ptr<SwapChain> GL4Device::CreateSwapChain(uint32_t preferredLength)
 {
 	// Swap chain length is always 1 for the GL backend
 	(void)preferredLength;
-	return make_shared<GL4SwapChain>();
+	return make_shared<GL4SwapChain>(*this);
 }
 
 shared_ptr<FrameBuffer> GL4Device::CreateFrameBuffer()
 {
-	return make_shared<GL4FrameBuffer>();
+	return make_shared<GL4FrameBuffer>(*this);
 }
 
 shared_ptr<CommandBuffer> GL4Device::CreateCommandBuffer()
 {
-	return make_shared<GL4CommandBuffer>(this);
+	return make_shared<GL4CommandBuffer>(*this);
 }
 
 shared_ptr<RasterizationShader> GL4Device::CreateRasterizationShader(
 	string name)
 {
-	return make_shared<GL4RasterizationShader>(name);
+	return make_shared<GL4RasterizationShader>(*this, name);
 }
 
 shared_ptr<Buffer> GL4Device::CreateBuffer(
@@ -1573,12 +1568,12 @@ shared_ptr<Buffer> GL4Device::CreateBuffer(
 	uint32_t size)
 {
 	return make_shared<GL4Buffer>(
-		bufferType, accessType, accessFrequency, size);
+		*this, bufferType, accessType, accessFrequency, size);
 }
 
 shared_ptr<Texture> GL4Device::CreateTexture(
 	uvec2 imageSize,
 	TextureFormat textureFormat)
 {
-	return make_shared<GL4Texture>(imageSize, textureFormat);
+	return make_shared<GL4Texture>(*this, imageSize, textureFormat);
 }
