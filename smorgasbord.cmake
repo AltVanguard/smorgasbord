@@ -9,9 +9,6 @@ set(DEP_SRC_DIRECTORY
 add_subdirectory(
 	"${DEP_SRC_DIRECTORY}/fmt-4.1.0"
 	${CMAKE_CURRENT_BINARY_DIR}/fmt)
-add_subdirectory(
-	"${DEP_SRC_DIRECTORY}/lodepng"
-	${CMAKE_CURRENT_BINARY_DIR}/lodepng)
 option(SDL_SHARED "" OFF)
 option(SDL_STATIC "" ON)
 option(DIRECTX "" OFF)
@@ -41,6 +38,7 @@ add_library(${PROJECT_NAME} STATIC
 	${PUBLIC_HEADERS}
 	${PRIVATE_HEADERS}
 	${SOURCES}
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lodepng/lodepng.cpp"
 )
 
 #find_package(Vulkan REQUIRED)
@@ -52,7 +50,6 @@ endif()
 target_link_libraries(${PROJECT_NAME}
 	PUBLIC
 		${PLATFORM_LIBRARIES}
-		lodepng
 		fmt
 		SDL2main SDL2-static
 #		${Vulkan_LIBRARIES}
@@ -63,7 +60,6 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC "thirdparty/"
 	PUBLIC "${DEP_SRC_DIRECTORY}/fmt-4.1.0"
 	PUBLIC "${DEP_SRC_DIRECTORY}/glm"
-	PUBLIC "${DEP_SRC_DIRECTORY}/lodepng"
 	PUBLIC "${DEP_SRC_DIRECTORY}/SDL2/include"
 	PRIVATE ${SDL_INCLUDE_DIR}
 #	PRIVATE ${Vulkan_INCLUDE_DIRS}

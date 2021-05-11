@@ -3,7 +3,7 @@
 #include <smorgasbord/image/image.hpp>
 #include <smorgasbord/util/log.hpp>
 
-#include <lodepng.h>
+#include <lodepng/lodepng.h>
 
 #include <sstream>
 
