@@ -1,7 +1,7 @@
 #ifndef SMORGASBORD_WINDOW_HPP
 #define SMORGASBORD_WINDOW_HPP
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 
 #include <memory>

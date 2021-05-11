@@ -22,8 +22,10 @@ Shortcomings:
 
 ## Compiling the source
 
-The library needs the "dep_src" repository contents to compile. Set the
-DEP_SRC_DIRECTORY cmake option or clone the two repos next to each other.
+This project uses the CMake build scripts.
+
+You have to either install GLM, FMT, and SDL2 system wide or set CMAKE_PREFIX_PATH when you invoke CMake. 
+The latter approach is also useful if you want to manually build the dependencies to match the build type (e.g. RelWithDebInfo or Debug)
 
 The build scripts are tested under QtCreator/MinGW32 and VS2017/MSVC14.
 

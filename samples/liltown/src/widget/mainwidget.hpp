@@ -7,7 +7,7 @@
 #include <smorgasbord/util/timer.hpp>
 #include <smorgasbord/window/framescheduler.hpp>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 
 #include <iostream>
