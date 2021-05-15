@@ -9,7 +9,7 @@
 #include <iostream>
 #include <functional>
 
-SMORGASBORD_SET_LOG(std::cout, LogAssertLevel::Error);
+SMORGASBORD_SET_LOG(std::cout, LogAssertLevel::FatalError);
 
 using namespace std;
 using namespace glm;

@@ -142,6 +142,7 @@ private:
 	/// calling Set() with a new ParameterBuffer of calling AddText()
 	/// For these call Clone() or create a shader from scratch
 	bool isCompiled = false;
+	bool canCompile = true;
 	
 public:
 	GL4RasterizationShader(GL4Device& device, string name = "");
@@ -152,7 +153,7 @@ public:
 		const VariableType &type,
 		void *p);
 	void ApplyBindings(GL4Device *device);
-	void Compile(const Pass &pass, const GeometryLayout &geometryLayout);
+	bool Compile(const Pass &pass, const GeometryLayout &geometryLayout);
 	void PrintErrorLog(GLuint sourceID, GLuint programID);
 	void Use();
 	

@@ -767,12 +767,12 @@ inline string GetAttributeTypeName(
 	return result + fmt::format("{0}", numComponents);
 }
 
-void GL4RasterizationShader::Compile(
+bool GL4RasterizationShader::Compile(
 	const Pass &pass, const GeometryLayout &geometryLayout)
 {
-	if (isCompiled)
+	if (!canCompile)
 	{
-		return;
+		return false;
 	}
 	
 	map<RasterizationStage, stringstream> stages;
@@ -904,7 +904,8 @@ void GL4RasterizationShader::Compile(
 		{
 			PrintErrorLog(sourceID, newProgramID);
 			//ReleaseResources();
-			return;
+			canCompile = false;
+			return false;
 		}
 		
 		gl.glAttachShader(newProgramID, sourceID);
@@ -927,13 +928,15 @@ void GL4RasterizationShader::Compile(
 		LogE("GL program LINK failed.");
 		
 		//ReleaseResources();
-		return;
+		canCompile = false;
+		return false;
 	}
 	
 	// TODO: enumerate constants into enumerableConstants
 	
 	isCompiled = true;
 	this->programID = newProgramID;
+	return true;
 }
 
 void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
@@ -1000,12 +1003,23 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 
 void GL4RasterizationShader::Use()
 {
+	if (!canCompile)
+	{
+		gl.glUseProgram(0);
+		return;
+	}
+	
 	AssertF(programID != 0, "Cannot use uninitialized program");
 	gl.glUseProgram(programID);
 }
 
 void GL4RasterizationShader::Set(TextureSamplerSet &_samplers)
 {
+	if (!canCompile)
+	{
+		return;
+	}
+	
 	samplers = &_samplers;
 	
 	uint32_t i = 0;
@@ -1033,6 +1047,11 @@ void GL4RasterizationShader::Set(
 	SetOp setOp,
 	RasterizationStageFlag stageFlags)
 {
+	if (!canCompile)
+	{
+		return;
+	}
+	
 	// TODO: check that only one buffer is bound with SetOp::Constants
 	
 	auto findResult = parameterBuffers.find(&buffer);
@@ -1198,7 +1217,12 @@ void GL4CommandBuffer::Draw(
 {
 	AssertF(shader != nullptr, "Cannot draw without a shader");
 	AssertF(passAddress != nullptr, "Cannot draw without a pass set");
-	shader->Compile(*passAddress, geometryLayout);
+	
+	if (!shader->Compile(*passAddress, geometryLayout))
+	{
+		return;
+	}
+	
 	shader->Use();
 	shader->ApplyBindings(&device);
 	
