@@ -972,12 +972,35 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	GLint sourceLength = -1;
 	gl.glGetShaderiv(sourceID, GL_SHADER_SOURCE_LENGTH, &sourceLength);
 	
-	vector<char> source(sourceLength);
+	string source(sourceLength, '\0');
 	GLsizei actualSourceLength;
 	gl.glGetShaderSource(
-		sourceID, sourceLength, &actualSourceLength, source.data());
+		sourceID, sourceLength, &actualSourceLength, &source[0]);
+	source.resize(actualSourceLength);
+	
+	auto StringPosDistance = [](string::size_type start, string::size_type end)
+	{
+		return end == string::npos ? 0 : end - start;
+	};
+	
 	errorLog << "SOURCE LISTING Retrieved source:\n";
-	errorLog << source.data() << endl;
+	string::size_type currentStartPos = 0;
+	int lineNum = 1;
+	while (currentStartPos < source.size())
+	{
+		auto lineEnd = source.find_first_of("\n", currentStartPos);
+		if (lineEnd == string::npos)
+		{
+			lineEnd = source.size();
+		}
+		errorLog << fmt::format("{:>4}: ", lineNum);
+		errorLog.write(
+			&source[currentStartPos],
+			StringPosDistance(currentStartPos, lineEnd));
+		errorLog << "\n";
+		currentStartPos = lineEnd + 1;
+		lineNum++;
+	}
 	errorLog << "SOURCE LISTING END\n\n";
 
 	int sourceInfoLogLength = 0;
@@ -1134,7 +1157,7 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 		const size_t numColors = clearColors.size();
 		for (size_t i = 0; i < numColors; i++)
 		{
-			gl.glClearBufferfv(GL_COLOR, i, &clearColors[i].x);
+			gl.glClearBufferfv(GL_COLOR, GLint(i), &clearColors[i].x);
 		}
 	}
 	
@@ -1336,11 +1359,12 @@ void GL4CommandBuffer::Draw(
 	
 	if (indexBuffer.IsValid())
 	{
+		using charptr_t = char*;
 		gl.glDrawElementsInstanced(
 			GetPrimitiveTopology(geometryLayout.primitiveType),
 			static_cast<GLsizei>(numVertices),
 			indexBuffer.dataType,
-			reinterpret_cast<char*>(startIndex *
+			charptr_t(nullptr) + (size_t(startIndex) *
 				GetIndexDataTypeSize(_indexBuffer.dataType)),
 			numInstances
 			);
