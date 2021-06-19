@@ -126,7 +126,7 @@ void GLWindow::EnterMainLoop(
 	std::function<void()> onDraw,
 	std::function<void(SDL_Event windowEvent)> onEvent)
 {
-	bool quitSignaled = false;
+	quitSignaled = false;
 	while (!quitSignaled)
 	{
 		onDraw();

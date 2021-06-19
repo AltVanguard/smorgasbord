@@ -29,6 +29,8 @@ class GLWindow
 		glContext;
 	shared_ptr<SDLGL4Device> device;
 	
+	bool quitSignaled = false;
+	
 public:
 	GLWindow(uvec2 _windowSize, const string &title);
 	virtual ~GLWindow();
@@ -38,6 +40,11 @@ public:
 		std::function<void(SDL_Event windowEvent)> onEvent);
 	
 	shared_ptr<Device> GetGL4Device();
+	
+	void QuitMainLoop()
+	{
+		quitSignaled = true;
+	}
 };
 
 }
