@@ -20,7 +20,7 @@ void Smorgasbord::MeshData::UpdateStatistics()
 		}
 	}
 	
-	vertCount = c.size();
+	vertCount = p.size();
 	if (vertCount > 0)
 	{
 		boundingMin = p[0];
