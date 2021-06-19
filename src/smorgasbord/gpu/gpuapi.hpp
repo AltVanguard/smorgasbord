@@ -461,8 +461,8 @@ inline string StageToString(RasterizationStage stage)
 		return "geometry";
 	case RasterizationStage::Fragment:
 		return "fragment";
-	case RasterizationStage::Num:
-		return "num";
+	default:
+		return "[unknown]";
 	}
 }
 
@@ -1094,7 +1094,7 @@ struct RasterizationPipelineState
 {
 	BlendState blend;
 	DepthTestState depthTest;
-	ivec4 viewport;
+	ivec4 viewport = ivec4(0);
 };
 
 struct Geometry

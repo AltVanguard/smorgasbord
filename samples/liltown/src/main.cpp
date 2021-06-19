@@ -17,6 +17,9 @@ using namespace Smorgasbord;
 
 int main(int argc, char *argv[])
 {
+	(void)argc;
+	(void)argv;
+	
 	uvec2 windowSize = uvec2(1280, 720);
 	shared_ptr<MainWidget> mainWidget = make_shared<MainWidget>(windowSize);
 	

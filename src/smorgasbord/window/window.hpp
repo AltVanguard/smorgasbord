@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 
 using namespace std;
 using namespace glm;

@@ -65,7 +65,7 @@ Smorgasbord::StaticMesh::StaticMesh(
 	
 	// Upload buffers
 	
-	uint32_t polyCount = mesh.polyCount;
+	uint32_t polyCount = uint32_t(mesh.polyCount);
 	uint32_t vertsPerFace = mesh.minVerticesPerFace;
 	
 	uint32_t bufferSize = sizeof(vec3) * polyCount * vertsPerFace;

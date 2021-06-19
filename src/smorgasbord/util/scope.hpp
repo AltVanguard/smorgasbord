@@ -2,6 +2,7 @@
 #define SCOPE_HPP
 
 #include <memory>
+#include <functional>
 
 using namespace std;
 

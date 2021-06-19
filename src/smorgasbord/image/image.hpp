@@ -53,7 +53,7 @@ public:
 	
 	void UpdateCached()
 	{
-		dataSize = data.size();
+		dataSize = uint32_t(data.size());
 		lineSize = imageSize.x * pixelSize;
 		padding = (4 - (lineSize % 4)) % 4;
 		stride = lineSize + padding;
