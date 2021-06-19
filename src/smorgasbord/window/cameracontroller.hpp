@@ -11,9 +11,6 @@
 #include <string>
 #include <vector>
 
-using namespace glm;
-using namespace std;
-
 namespace Smorgasbord {
 
 class CameraController
@@ -31,7 +28,7 @@ public:
 class FlyCameraController : public CameraController
 {
 private:
-	mat4 oldView;
+	glm::mat4 oldView;
 	
 public:
 	FlyCameraController(Camera *camera);

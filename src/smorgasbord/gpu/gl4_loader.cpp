@@ -2,7 +2,7 @@
 
 namespace Smorgasbord {
 
-GL4Loader::GL4Loader(string library_override)
+GL4Loader::GL4Loader(std::string library_override)
 {
 	if (library_override.empty())
 	{

@@ -15,7 +15,7 @@ Smorgasbord::Viewport::Viewport(
 	SetViewport(width, height, targetAspectRatio, mode);
 }
 
-Smorgasbord::Viewport::Viewport(vec2 offset, vec2 areaSize, vec2 windowSize)
+Smorgasbord::Viewport::Viewport(glm::vec2 offset, glm::vec2 areaSize, glm::vec2 windowSize)
 {
 	SetArea(offset, areaSize, windowSize);
 }
@@ -36,17 +36,17 @@ void Smorgasbord::Viewport::SetViewport(
 	switch (mode)
 	{
 	case ViewportMode::Stretch:
-		factor = vec2(1.0f, 1.0f);
+		factor = glm::vec2(1.0f, 1.0f);
 		break;
 		
 	case ViewportMode::Letterbox:
 		if (viewportAspectRatio > targetAspectRatio)
 		{
-			factor = vec2(targetAspectRatio / viewportAspectRatio,1);
+			factor = glm::vec2(targetAspectRatio / viewportAspectRatio,1);
 		}
 		else
 		{
-			factor = vec2(1, viewportAspectRatio / targetAspectRatio);
+			factor = glm::vec2(1, viewportAspectRatio / targetAspectRatio);
 		}
 		break;
 		
@@ -55,34 +55,34 @@ void Smorgasbord::Viewport::SetViewport(
 		break;
 	}
 	
-	viewport = mat4(1.0f);
+	viewport = glm::mat4(1.0f);
 	viewport[0][0] = factor.x;
 	viewport[1][1] = factor.y;
 }
 
 void Smorgasbord::Viewport::ResetViewport()
 {
-	viewport = mat4(1.0f);
+	viewport = glm::mat4(1.0f);
 }
 
 void Smorgasbord::Viewport::SetArea(
-	vec2 offset, vec2 areaSize, vec2 windowSize)
+	glm::vec2 offset, glm::vec2 areaSize, glm::vec2 windowSize)
 {
-	area = mat4(1.0f);
+	area = glm::mat4(1.0f);
 	area[0][0] = areaSize.x / windowSize.x;
 	area[1][1] = areaSize.y / windowSize.y;
 	area[3][0] = areaSize.x / windowSize.x - 1.0f + offset.x / windowSize.x;
 	area[3][1] = areaSize.y / windowSize.y - 1.0f + offset.y / windowSize.y;
 }
 
-void Smorgasbord::Viewport::SetArea(vec2 scale, vec2 offset)
+void Smorgasbord::Viewport::SetArea(glm::vec2 scale, glm::vec2 offset)
 {
-	area = Scale(vec3(scale, 1)) * Translate(vec3(offset, 0));
+	area = Scale(glm::vec3(scale, 1)) * Translate(glm::vec3(offset, 0));
 }
 
 void Smorgasbord::Viewport::ResetArea()
 {
-	area = mat4(1.0f);
+	area = glm::mat4(1.0f);
 }
 
 

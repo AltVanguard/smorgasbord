@@ -1,8 +1,8 @@
 #include "transform.hpp"
 
-mat4 Smorgasbord::RotateAxisAngle(vec3 v, float angle)
+glm::mat4 Smorgasbord::RotateAxisAngle(glm::vec3 v, float angle)
 {
-	mat4 result(1.0f);
+	glm::mat4 result(1.0f);
 	
 	float s = sin(angle);
 	float c = cos(angle);
@@ -23,9 +23,9 @@ mat4 Smorgasbord::RotateAxisAngle(vec3 v, float angle)
 	return result;
 }
 
-mat4 Smorgasbord::RotateXYZ(vec3 angles)
+glm::mat4 Smorgasbord::RotateXYZ(glm::vec3 angles)
 {
-	mat4 result(1.0f);
+	glm::mat4 result(1.0f);
 	
 	float sa = sin(angles.x);
 	float ca = cos(angles.x);
@@ -51,9 +51,9 @@ mat4 Smorgasbord::RotateXYZ(vec3 angles)
 	return result;
 }
 
-mat4 Smorgasbord::Translate(vec3 v)
+glm::mat4 Smorgasbord::Translate(glm::vec3 v)
 {
-	mat4 result(1.0f);
+	glm::mat4 result(1.0f);
 	
 	result[3][0] = v.x;
 	result[3][1] = v.y;
@@ -62,9 +62,9 @@ mat4 Smorgasbord::Translate(vec3 v)
 	return result;
 }
 
-mat4 Smorgasbord::Scale(vec3 v)
+glm::mat4 Smorgasbord::Scale(glm::vec3 v)
 {
-	mat4 result(1.0f);
+	glm::mat4 result(1.0f);
 	
 	result[0][0] = v.x;
 	result[1][1] = v.y;
@@ -74,35 +74,35 @@ mat4 Smorgasbord::Scale(vec3 v)
 }
 
 
-mat4 Smorgasbord::Center(vec3 boundingMin, vec3 boundingMax)
+glm::mat4 Smorgasbord::Center(glm::vec3 boundingMin, glm::vec3 boundingMax)
 {
-	vec3 boundingCenter = (boundingMin + boundingMax) / 2.0f;
-	vec3 boundingDiff = boundingMax - boundingMin;
+	glm::vec3 boundingCenter = (boundingMin + boundingMax) / 2.0f;
+	glm::vec3 boundingDiff = boundingMax - boundingMin;
 	float boundingScale = glm::max(
 		glm::max(boundingDiff.x, boundingDiff.y), boundingDiff.z);
 	
-	return Scale(vec3(1.0f/boundingScale)) * Translate(-boundingCenter);
+	return Scale(glm::vec3(1.0f/boundingScale)) * Translate(-boundingCenter);
 }
 
 
-mat4 Smorgasbord::NormalTransform(mat4 &world)
+glm::mat4 Smorgasbord::NormalTransform(glm::mat4 &world)
 {
 	// normal = world.transpose().invert()
-	mat4 normal = world;
+	glm::mat4 normal = world;
 	float det = determinant(normal);
-	normal[3] = vec4(0, 0, 0, det);
+	normal[3] = glm::vec4(0, 0, 0, det);
 	normal = transpose(normal) / det;
 	return normal;
 }
 
-mat4 Smorgasbord::GetPerspectiveProjection(
+glm::mat4 Smorgasbord::GetPerspectiveProjection(
 	float sensorWidth,
 	float sensorHeight,
 	float focalLength,
 	float clipNear,
 	float clipFar)
 {
-	mat4 projection = mat4(0.0f);
+	glm::mat4 projection = glm::mat4(0.0f);
 	
 	float w = sensorWidth;
 	float h = sensorHeight;
@@ -119,7 +119,7 @@ mat4 Smorgasbord::GetPerspectiveProjection(
 	return projection;
 }
 
-mat4 Smorgasbord::GetPerspectiveProjection(
+glm::mat4 Smorgasbord::GetPerspectiveProjection(
 	float aspectRatio,
 	float horizontalFov,
 	float clipNear,
@@ -131,14 +131,14 @@ mat4 Smorgasbord::GetPerspectiveProjection(
 		aspectRatio, 1.0f, focalLength, clipNear, clipFar);
 }
 
-mat4 Smorgasbord::GetOrthographicProjection(
+glm::mat4 Smorgasbord::GetOrthographicProjection(
 	float sensorWidth,
 	float sensorHeight,
 	float orthoSensorScale,
 	float clipNear,
 	float clipFar)
 {
-	mat4 projection = mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
 	float n = clipNear;
 	float f = clipFar;
 	projection[0][0] = (2.0f / orthoSensorScale) / sensorWidth;
@@ -149,13 +149,13 @@ mat4 Smorgasbord::GetOrthographicProjection(
 	return projection;
 }
 
-mat4 Smorgasbord::GetOrthographicProjection(
+glm::mat4 Smorgasbord::GetOrthographicProjection(
 	float aspectRatio,
 	float orthoSensorScale,
 	float clipNear,
 	float clipFar)
 {
-	mat4 projection = mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
 	
 	float w = aspectRatio > 1.0f ? aspectRatio : 1.0f;
 	float h = aspectRatio > 1.0f ? 1.0f : 1.0f / aspectRatio;

@@ -297,7 +297,7 @@ inline GLenum GetShaderStage(RasterizationStage stage)
 	LogF("Invalid enum value");
 }
 
-inline string GetShaderTypeString(GLenum stageType)
+inline std::string GetShaderTypeString(GLenum stageType)
 {
 	switch (stageType)
 	{
@@ -371,7 +371,7 @@ void Smorgasbord::GL4Buffer::Unmap()
 
 
 Smorgasbord::GL4Texture::GL4Texture(
-	GL4Device& device, uvec2 _size, TextureFormat _format)
+	GL4Device& device, glm::uvec2 _size, TextureFormat _format)
 	: Texture(_size, _format)
 	, gl(device.GetLoader())
 {
@@ -520,7 +520,7 @@ void Smorgasbord::GL4Texture::Verify(Smorgasbord::Image &image)
 {
 	Bind(0);
 	
-	vector<unsigned char> returnedImage;
+	std::vector<unsigned char> returnedImage;
 	returnedImage.resize(image.data.size());
 	
 	GL4TextureFormat nativeFormat = GetTextureFormat(format);
@@ -549,11 +549,11 @@ void Smorgasbord::GL4Texture::Verify(Smorgasbord::Image &image)
 	Unbind();
 }
 
-shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
+std::shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
 {
 	Bind(0);
 	
-	shared_ptr<Image> image = make_shared<Image>(size, 4);
+	std::shared_ptr<Image> image = std::make_shared<Image>(size, 4);
 	
 	GL4TextureFormat nativeFormat = GetTextureFormat(format);
 	
@@ -568,7 +568,7 @@ shared_ptr<Smorgasbord::Image> Smorgasbord::GL4Texture::Download()
 }
 
 GL4RasterizationShader::GL4RasterizationShader(
-	GL4Device& device, string name)
+	GL4Device& device, std::string name)
 	: RasterizationShader(name)
 	, gl(device.GetLoader())
 { }
@@ -717,7 +717,7 @@ void GL4RasterizationShader::ApplyBindings(GL4Device *device)
 			/// it will ruin field alignment and you won't even be able to
 			/// read the mat3 from the shader properly
 			AssertE(
-				string(field.type) != "mat3",
+				std::string(field.type) != "mat3",
 				"Look at that! A mat3 in a ParameterBuffer? That won't do!");
 			
 			// TODO: check if variable is used/enumerated
@@ -733,23 +733,23 @@ void GL4RasterizationShader::ApplyBindings(GL4Device *device)
 }
 
 inline void AddToStages(
-	map<RasterizationStage, stringstream> &stages,
-	const string &text,
+	std::map<RasterizationStage, std::stringstream> &stages,
+	const std::string &text,
 	Smorgasbord::RasterizationStageFlag stageMask)
 {
 	for (auto &stage : stages)
 	{
 		if ((StageToFlag(stage.first) & stageMask) > 0)
 		{
-			stage.second << text << endl;
+			stage.second << text << std::endl;
 		}
 	}
 }
 
-inline string GetAttributeTypeName(
+inline std::string GetAttributeTypeName(
 	AttributeAccessType accessType, uint32_t numComponents)
 {
-	string result;
+	std::string result;
 	
 	switch(accessType)
 	{
@@ -775,14 +775,14 @@ bool GL4RasterizationShader::Compile(
 		return false;
 	}
 	
-	map<RasterizationStage, stringstream> stages;
+	std::map<RasterizationStage, std::stringstream> stages;
 	//ShaderStageFlag activeStageMask = ShaderStageFlag::None;
 	
 	for (auto &source : sources)
 	{
 		if (source.second.length() > 0)
 		{
-			stages.emplace(source.first, stringstream());
+			stages.emplace(source.first, std::stringstream());
 			//activeStageMask |= StageToFlag(source.first);
 		}
 	}
@@ -797,7 +797,7 @@ bool GL4RasterizationShader::Compile(
 	{
 		for (const auto &attribute : geometryLayout.attributes)
 		{
-			string attributeString = fmt::format(
+			std::string attributeString = fmt::format(
 				"layout(location = {0}) in {1} {2};",
 				attribute.location,
 				GetAttributeTypeName(
@@ -816,7 +816,7 @@ bool GL4RasterizationShader::Compile(
 		uint32_t i = 0;
 		for (auto& sampler : samplers->GetSamplers())
 		{
-			string bindingString =
+			std::string bindingString =
 				fmt::format("layout(binding = {0}) uniform sampler2D {1};",
 				i, sampler->name);
 			
@@ -842,7 +842,7 @@ bool GL4RasterizationShader::Compile(
 				/// aliased. We add the defines for the constants too,
 				/// so in case of name collisions we don't get weird
 				/// behavior
-				string unformString =
+				std::string unformString =
 					fmt::format(
 						"layout(location = {0}) uniform {1} {2};\n"
 						"#ifdef {2}\n"
@@ -862,7 +862,7 @@ bool GL4RasterizationShader::Compile(
 	
 	for (auto &color : pass.GetColorAttachments())
 	{
-		string colorString =
+		std::string colorString =
 			fmt::format("out {0} {1};",
 			color->GetType(), color->GetName());
 		
@@ -886,7 +886,7 @@ bool GL4RasterizationShader::Compile(
 	{
 		GLenum stageType = GetShaderStage(stage.first);
 		GLuint sourceID = gl.glCreateShader(stageType);
-		string s = stage.second.str();
+		std::string s = stage.second.str();
 		const char *sp = s.c_str();
 		gl.glShaderSource(sourceID, 1, &sp, NULL);
 		sourceIDs.emplace(stage.first, sourceID);
@@ -941,7 +941,7 @@ bool GL4RasterizationShader::Compile(
 
 void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 {
-	stringstream errorLog;
+	std::stringstream errorLog;
 	GLint stageType = GL_NONE;
 	
 	gl.glGetShaderiv(sourceID, GL_SHADER_TYPE, &stageType);
@@ -955,7 +955,7 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	gl.glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &programInfoLogLength);
 	if (programInfoLogLength > 0)
 	{
-		string infoLog;
+		std::string infoLog;
 		infoLog.resize(programInfoLogLength);
 		
 		int charCount = 0;
@@ -965,31 +965,31 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 		if (charCount > 0)
 		{
 			errorLog << "Program errors:\n";
-			errorLog << infoLog.substr(0, charCount) << endl;
+			errorLog << infoLog.substr(0, charCount) << std::endl;
 		}
 	}
 	
 	GLint sourceLength = -1;
 	gl.glGetShaderiv(sourceID, GL_SHADER_SOURCE_LENGTH, &sourceLength);
 	
-	string source(sourceLength, '\0');
+	std::string source(sourceLength, '\0');
 	GLsizei actualSourceLength;
 	gl.glGetShaderSource(
 		sourceID, sourceLength, &actualSourceLength, &source[0]);
 	source.resize(actualSourceLength);
 	
-	auto StringPosDistance = [](string::size_type start, string::size_type end)
+	auto StringPosDistance = [](std::string::size_type start, std::string::size_type end)
 	{
-		return end == string::npos ? 0 : end - start;
+		return end == std::string::npos ? 0 : end - start;
 	};
 	
 	errorLog << "SOURCE LISTING Retrieved source:\n";
-	string::size_type currentStartPos = 0;
+	std::string::size_type currentStartPos = 0;
 	int lineNum = 1;
 	while (currentStartPos < source.size())
 	{
 		auto lineEnd = source.find_first_of("\n", currentStartPos);
-		if (lineEnd == string::npos)
+		if (lineEnd == std::string::npos)
 		{
 			lineEnd = source.size();
 		}
@@ -1007,7 +1007,7 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 	gl.glGetShaderiv(sourceID, GL_INFO_LOG_LENGTH, &sourceInfoLogLength);
 	if (sourceInfoLogLength > 0)
 	{
-		string infoLog;
+		std::string infoLog;
 		infoLog.resize(sourceInfoLogLength);
 		
 		int charCount = 0;
@@ -1016,7 +1016,7 @@ void GL4RasterizationShader::PrintErrorLog(GLuint sourceID, GLuint programID)
 		
 		if (charCount > 0)
 		{
-			errorLog << infoLog.substr(0, charCount) << endl;
+			errorLog << infoLog.substr(0, charCount) << std::endl;
 		}
 	}
 	
@@ -1051,8 +1051,8 @@ void GL4RasterizationShader::Set(TextureSamplerSet &_samplers)
 		AssertE(sampler->texture != nullptr,
 			"Sampler to be set has no texture");
 		
-		shared_ptr<GL4Texture> texture =
-			dynamic_pointer_cast<GL4Texture>(sampler->texture);
+		std::shared_ptr<GL4Texture> texture =
+			std::dynamic_pointer_cast<GL4Texture>(sampler->texture);
 		
 		texture->Bind(i);
 		texture->SetTextureFilter(sampler->minify, sampler->magnify);
@@ -1116,17 +1116,17 @@ GL4CommandBuffer::~GL4CommandBuffer()
 {
 	// TODO?: Could be collected into an array and deleted at ones.
 	//		Probably wouldn't make much difference
-	for (pair<GL4VAOKey, GLuint> vao : vaos)
+	for (std::pair<GL4VAOKey, GLuint> vao : vaos)
 	{
 		gl.glDeleteVertexArrays(1, &vao.second);
 	}
 	vaos.clear();
 }
 
-void GL4CommandBuffer::SetFrameBuffer(shared_ptr<FrameBuffer> _frameBuffer)
+void GL4CommandBuffer::SetFrameBuffer(std::shared_ptr<FrameBuffer> _frameBuffer)
 {
-	shared_ptr<IGL4FrameBuffer> fb =
-		dynamic_pointer_cast<IGL4FrameBuffer>(_frameBuffer);
+	std::shared_ptr<IGL4FrameBuffer> fb =
+		std::dynamic_pointer_cast<IGL4FrameBuffer>(_frameBuffer);
 	AssertE(fb != nullptr, "Can only set a GL framebuffer");
 	fb->Use();
 	this->frameBuffer = fb;
@@ -1136,11 +1136,10 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 {
 	// Set Pass
 	
-	const vector<ColorAttachment*> &colorAttachments =
-		_pass.GetColorAttachments();
+	const auto &colorAttachments = _pass.GetColorAttachments();
 	
-	vector<GLenum> clears;
-	vector<vec4> clearColors;
+	std::vector<GLenum> clears;
+	std::vector<glm::vec4> clearColors;
 	for (const ColorAttachment *colorAttachment : colorAttachments)
 	{
 		if (colorAttachment != nullptr
@@ -1186,15 +1185,15 @@ void GL4CommandBuffer::StartPass(const Pass &_pass)
 }
 
 void GL4CommandBuffer::SetPipeline(
-	shared_ptr<RasterizationShader> _shader,
+	std::shared_ptr<RasterizationShader> _shader,
 	const GeometryLayout &_geometryLayout,
 	const RasterizationPipelineState &_pipelineState)
 {
 	// Set Shader
 	
 	AssertF(_shader != nullptr, "Uninitialized shader was given");
-	shared_ptr<GL4RasterizationShader> s =
-			dynamic_pointer_cast<GL4RasterizationShader>(_shader);
+	std::shared_ptr<GL4RasterizationShader> s =
+		std::dynamic_pointer_cast<GL4RasterizationShader>(_shader);
 	AssertF(s != nullptr, "Given shader is not a GL4GraphicsShader");
 	if (shader == nullptr
 		|| shader != _shader)
@@ -1223,7 +1222,7 @@ void GL4CommandBuffer::SetPipeline(
 	
 	if (pipelineState.viewport != _pipelineState.viewport || isFirstRun)
 	{
-		const ivec4 &viewport = _pipelineState.viewport;
+		const glm::ivec4 &viewport = _pipelineState.viewport;
 		gl.glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
 	}
 	
@@ -1232,7 +1231,7 @@ void GL4CommandBuffer::SetPipeline(
 }
 
 void GL4CommandBuffer::Draw(
-	shared_ptr<Buffer> _vertexBuffer,
+	std::shared_ptr<Buffer> _vertexBuffer,
 	IndexBufferRef _indexBuffer,
 	uint32_t startIndex,
 	uint32_t numVertices,
@@ -1258,8 +1257,8 @@ void GL4CommandBuffer::Draw(
 	///	LogE("GL program validation failed.");
 	///}
 	
-	shared_ptr<GL4Buffer> vertexBuffer =
-		dynamic_pointer_cast<GL4Buffer>(_vertexBuffer);
+	std::shared_ptr<GL4Buffer> vertexBuffer =
+		std::dynamic_pointer_cast<GL4Buffer>(_vertexBuffer);
 	GL4IndexBufferRef indexBuffer = _indexBuffer;
 	
 	if (_vertexBuffer != nullptr && vertexBuffer == nullptr)
@@ -1384,7 +1383,7 @@ GL4IndexBufferRef::GL4IndexBufferRef()
 { }
 
 GL4IndexBufferRef::GL4IndexBufferRef(IndexBufferRef &_indexBuffer)
-	: buffer(dynamic_pointer_cast<GL4Buffer>(_indexBuffer.buffer))
+	: buffer(std::dynamic_pointer_cast<GL4Buffer>(_indexBuffer.buffer))
 	, dataType(GetIndexDataType(_indexBuffer.dataType))
 { }
 
@@ -1411,10 +1410,10 @@ bool Smorgasbord::GL4FrameBuffer::IsReady()
 
 void Smorgasbord::GL4FrameBuffer::SetColor(
 	uint32_t attachementIndex,
-	shared_ptr<Smorgasbord::Texture> _colorTex)
+	std::shared_ptr<Smorgasbord::Texture> _colorTex)
 {
-	shared_ptr<GL4Texture> colorTex = 
-		dynamic_pointer_cast<GL4Texture>(_colorTex);
+	std::shared_ptr<GL4Texture> colorTex =
+		std::dynamic_pointer_cast<GL4Texture>(_colorTex);
 	
 	if (!colorTex->IsReady())
 	{
@@ -1449,10 +1448,10 @@ void Smorgasbord::GL4FrameBuffer::SetColor(
 }
 
 void Smorgasbord::GL4FrameBuffer::SetDepth(
-	shared_ptr<Smorgasbord::Texture> _depthTex)
+	std::shared_ptr<Smorgasbord::Texture> _depthTex)
 {
-	shared_ptr<GL4Texture> depthTex = 
-		dynamic_pointer_cast<GL4Texture>(_depthTex);
+	std::shared_ptr<GL4Texture> depthTex =
+		std::dynamic_pointer_cast<GL4Texture>(_depthTex);
 		
 	if (!depthTex->IsReady())
 	{
@@ -1491,7 +1490,7 @@ void Smorgasbord::GL4FrameBuffer::Use()
 
 void GL4FrameBuffer::SetDrawBuffers()
 {
-	vector<GLuint> buffers;
+	std::vector<GLuint> buffers;
 	for (const auto &color : colorAttachments)
 	{
 		buffers.push_back(
@@ -1509,14 +1508,14 @@ GL4SystemFrameBuffer::GL4SystemFrameBuffer(GL4Device& device)
 
 void GL4SystemFrameBuffer::SetColor(
 	uint32_t attachmentIndex,
-	shared_ptr<Texture> color)
+	std::shared_ptr<Texture> color)
 {
 	(void)attachmentIndex;
 	(void)color;
 	LogW("Cannot set color attachment for system attachment");
 }
 
-void GL4SystemFrameBuffer::SetDepth(shared_ptr<Texture> depth)
+void GL4SystemFrameBuffer::SetDepth(std::shared_ptr<Texture> depth)
 {
 	(void)depth;
 	LogW("Cannot set depth attachment for system attachment");
@@ -1539,10 +1538,10 @@ void GL4SystemFrameBuffer::SetDrawBuffers()
 
 GL4SwapChain::GL4SwapChain(GL4Device& device)
 {
-	frameBuffers.push_back(make_shared<GL4SystemFrameBuffer>(device));
+	frameBuffers.push_back(std::make_shared<GL4SystemFrameBuffer>(device));
 }
 
-vector<shared_ptr<FrameBuffer> > GL4SwapChain::GetFrameBuffers()
+std::vector<std::shared_ptr<FrameBuffer> > GL4SwapChain::GetFrameBuffers()
 {
 	return frameBuffers;
 }
@@ -1563,7 +1562,7 @@ uint32_t GL4SwapChain::GetCurrentIndex()
 	return 0;
 }
 
-void GL4Queue::Submit(shared_ptr<CommandBuffer> commandBuffer)
+void GL4Queue::Submit(std::shared_ptr<CommandBuffer> commandBuffer)
 { 
 	(void)commandBuffer;
 }
@@ -1573,9 +1572,9 @@ const DeviceInfo &GL4Device::GetDeviceInfo() const
 	return deviceInfo;
 }
 
-vector< shared_ptr<Queue> > GL4Device::GetQueues()
+std::vector<std::shared_ptr<Queue>> GL4Device::GetQueues()
 {
-	shared_ptr<Queue> queue = GetDisplayQueue();
+	std::shared_ptr<Queue> queue = GetDisplayQueue();
 	if (queue != nullptr)
 	{
 		return { GetDisplayQueue() };
@@ -1586,42 +1585,42 @@ vector< shared_ptr<Queue> > GL4Device::GetQueues()
 	}
 }
 
-shared_ptr<SwapChain> GL4Device::CreateSwapChain(uint32_t preferredLength)
+std::shared_ptr<SwapChain> GL4Device::CreateSwapChain(uint32_t preferredLength)
 {
 	// Swap chain length is always 1 for the GL backend
 	(void)preferredLength;
-	return make_shared<GL4SwapChain>(*this);
+	return std::make_shared<GL4SwapChain>(*this);
 }
 
-shared_ptr<FrameBuffer> GL4Device::CreateFrameBuffer()
+std::shared_ptr<FrameBuffer> GL4Device::CreateFrameBuffer()
 {
-	return make_shared<GL4FrameBuffer>(*this);
+	return std::make_shared<GL4FrameBuffer>(*this);
 }
 
-shared_ptr<CommandBuffer> GL4Device::CreateCommandBuffer()
+std::shared_ptr<CommandBuffer> GL4Device::CreateCommandBuffer()
 {
-	return make_shared<GL4CommandBuffer>(*this);
+	return std::make_shared<GL4CommandBuffer>(*this);
 }
 
-shared_ptr<RasterizationShader> GL4Device::CreateRasterizationShader(
-	string name)
+std::shared_ptr<RasterizationShader> GL4Device::CreateRasterizationShader(
+	std::string name)
 {
-	return make_shared<GL4RasterizationShader>(*this, name);
+	return std::make_shared<GL4RasterizationShader>(*this, name);
 }
 
-shared_ptr<Buffer> GL4Device::CreateBuffer(
+std::shared_ptr<Buffer> GL4Device::CreateBuffer(
 	BufferType bufferType,
 	BufferUsageType accessType,
 	BufferUsageFrequency accessFrequency,
 	uint32_t size)
 {
-	return make_shared<GL4Buffer>(
+	return std::make_shared<GL4Buffer>(
 		*this, bufferType, accessType, accessFrequency, size);
 }
 
-shared_ptr<Texture> GL4Device::CreateTexture(
-	uvec2 imageSize,
+std::shared_ptr<Texture> GL4Device::CreateTexture(
+	glm::uvec2 imageSize,
 	TextureFormat textureFormat)
 {
-	return make_shared<GL4Texture>(*this, imageSize, textureFormat);
+	return std::make_shared<GL4Texture>(*this, imageSize, textureFormat);
 }

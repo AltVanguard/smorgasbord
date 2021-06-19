@@ -6,11 +6,9 @@
 #include <memory>
 #include <string>
 
-using namespace std;
-
 namespace Smorgasbord {
 
-unique_ptr<MeshData> LoadOBJ(unique_ptr<istream> file);
+std::unique_ptr<MeshData> LoadOBJ(std::unique_ptr<std::istream> file);
 
 }
 

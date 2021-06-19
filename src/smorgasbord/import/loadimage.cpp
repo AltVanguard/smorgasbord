@@ -7,17 +7,17 @@
 
 #include <sstream>
 
-shared_ptr<Smorgasbord::Image> Smorgasbord::LoadImage(string filename)
+std::shared_ptr<Smorgasbord::Image> Smorgasbord::LoadImage(std::string filename)
 {
 	return LoadImagePNG(filename);
 }
 
-void Smorgasbord::SaveImage(Smorgasbord::Image &image, string filename)
+void Smorgasbord::SaveImage(Smorgasbord::Image &image, std::string filename)
 {
 	SaveImagePNG(image, filename);
 }
 
-shared_ptr<Smorgasbord::Image> Smorgasbord::LoadImagePNG(string filename)
+std::shared_ptr<Smorgasbord::Image> Smorgasbord::LoadImagePNG(std::string filename)
 {
 	Image* img = new Image();
 	
@@ -27,17 +27,17 @@ shared_ptr<Smorgasbord::Image> Smorgasbord::LoadImagePNG(string filename)
 	if (error == 0)
 	{
 		img->UpdateCached();
-		return shared_ptr<Image>(img);
+		return std::shared_ptr<Image>(img);
 	}
 	else
 	{
 		LogE("lodepng DEcoder error {0}: {1}",
 			error, lodepng_error_text(error));
-		return shared_ptr<Image>();
+		return std::shared_ptr<Image>();
 	}
 }
 
-void Smorgasbord::SaveImagePNG(Smorgasbord::Image &image, string filename)
+void Smorgasbord::SaveImagePNG(Smorgasbord::Image &image, std::string filename)
 {
 	if (image.data.size() == 0)
 	{

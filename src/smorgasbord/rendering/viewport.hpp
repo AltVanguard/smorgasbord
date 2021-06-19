@@ -8,9 +8,6 @@
 // TODO: viewport offset
 // TODO: CROP mode
 
-using namespace glm;
-using namespace std;
-
 namespace Smorgasbord {
 
 enum class ViewportMode 
@@ -30,9 +27,9 @@ public:
 	
 	// calculated
 	float viewportAspectRatio;
-	vec2 factor;
-	mat4 viewport;
-	mat4 area;
+	glm::vec2 factor;
+	glm::mat4 viewport;
+	glm::mat4 area;
 	
 public:
 	Viewport();
@@ -41,7 +38,7 @@ public:
 		int height,
 		float targetAspectRatio,
 		ViewportMode mode = ViewportMode::Letterbox);
-	Viewport(vec2 offset, vec2 areaSize, vec2 windowSize);
+	Viewport(glm::vec2 offset, glm::vec2 areaSize, glm::vec2 windowSize);
 	
 	void SetViewport(
 		int width,
@@ -49,11 +46,11 @@ public:
 		float targetAspectRatio,
 		ViewportMode mode = ViewportMode::Letterbox);
 	void ResetViewport();
-	void SetArea(vec2 offset, vec2 areaSize, vec2 windowSize);
-	void SetArea(vec2 scale, vec2 offset);
+	void SetArea(glm::vec2 offset, glm::vec2 areaSize, glm::vec2 windowSize);
+	void SetArea(glm::vec2 scale, glm::vec2 offset);
 	void ResetArea();
 	
-	inline mat4 GetMatrix()
+	inline glm::mat4 GetMatrix()
 	{
 		return viewport * area;
 	}

@@ -8,7 +8,7 @@ Smorgasbord::Camera::Camera()
 	: projection(1.0f), view(1.0f)
 { }
 
-mat4 Smorgasbord::Camera::GetProjectionMatrix()
+glm::mat4 Smorgasbord::Camera::GetProjectionMatrix()
 {
 	if (!isValid)
 	{
@@ -32,22 +32,22 @@ mat4 Smorgasbord::Camera::GetProjectionMatrix()
 	return projection;
 }
 
-mat4 Smorgasbord::Camera::GetViewMatrix()
+glm::mat4 Smorgasbord::Camera::GetViewMatrix()
 {
 	return view;
 }
 
-void Smorgasbord::Camera::SetView(vec3 location, vec3 rotation)
+void Smorgasbord::Camera::SetView(glm::vec3 location, glm::vec3 rotation)
 {
 	view = transpose(RotateXYZ(rotation)) * Translate(-location);
 }
 
-void Smorgasbord::Camera::SetView(vec3 location, vec3 up, vec3 direction)
+void Smorgasbord::Camera::SetView(glm::vec3 location, glm::vec3 up, glm::vec3 direction)
 {
 	// TODO
 }
 
-void Smorgasbord::Camera::SetViewMatrix(const mat4 &mat)
+void Smorgasbord::Camera::SetViewMatrix(const glm::mat4 &mat)
 {
 	view = mat;
 }

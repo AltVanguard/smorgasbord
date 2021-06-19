@@ -8,9 +8,6 @@
 #include <string>
 #include <functional>
 
-using namespace std;
-using namespace glm;
-
 namespace Smorgasbord {
 
 struct SdlWindowDeleter
@@ -23,19 +20,19 @@ struct SdlWindowDeleter
 
 class Window
 {
-	uvec2 windowSize;
+	glm::uvec2 windowSize;
 
-	unique_ptr<SDL_Window, SdlWindowDeleter> window;
+	std::unique_ptr<SDL_Window, SdlWindowDeleter> window;
 	
 public:
-	Window(uvec2 _windowSize, const string &title);
+	Window(glm::uvec2 _windowSize, const std::string &title);
 	virtual ~Window();
 	
 	void EnterMainLoop(
 		std::function<void()> onDraw,
 		std::function<void(SDL_Event windowEvent)> onEvent);
 	
-	uvec2 GetWindowSize()
+	glm::uvec2 GetWindowSize()
 	{
 		return windowSize;
 	}

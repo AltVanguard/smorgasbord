@@ -7,22 +7,19 @@
 
 #include <memory>
 
-using namespace glm;
-using namespace std;
-
 namespace Smorgasbord {
 
 struct MeshData
 {
 	// Data
 	
-	vector<vec3> p; // vertex positions
-	vector<vec3> n; // normals
-	vector<vec2> t; // texture coordinates
-	vector<int32_t> c; // face vertex counts
-	vector<uint32_t> fp; // face position indices
-	vector<uint32_t> fn; // face normal indices
-	vector<uint32_t> ft; // face texture coordinate indices
+	std::vector<glm::vec3> p; // vertex positions
+	std::vector<glm::vec3> n; // normals
+	std::vector<glm::vec2> t; // texture coordinates
+	std::vector<int32_t> c; // face vertex counts
+	std::vector<uint32_t> fp; // face position indices
+	std::vector<uint32_t> fn; // face normal indices
+	std::vector<uint32_t> ft; // face texture coordinate indices
 	
 	// Statistics
 	
@@ -31,9 +28,9 @@ struct MeshData
 	int32_t minVerticesPerFace = 0;
 	int32_t maxVerticesPerFace = 0;
 	// bounding box
-	vec3 boundingMin = vec3(0);
-	vec3 boundingMax = vec3(0);
-	vec3 boundingCenter = vec3(0);
+	glm::vec3 boundingMin = glm::vec3(0);
+	glm::vec3 boundingMax = glm::vec3(0);
+	glm::vec3 boundingCenter = glm::vec3(0);
 	float boundingScale = 0;
 	
 	void UpdateStatistics();
@@ -52,11 +49,11 @@ private:
 	
 public:
 	StaticMesh();
-	StaticMesh(shared_ptr<Device> device, unique_ptr<MeshData> meshData);
+	StaticMesh(std::shared_ptr<Device> device, std::unique_ptr<MeshData> meshData);
 	~StaticMesh();
 	
 	void Init(
-		shared_ptr<Buffer> vertexBuffer,
+		std::shared_ptr<Buffer> vertexBuffer,
 		IndexBufferRef indexBuffer,
 		uint32_t numVertices,
 		GeometryLayout &geometryLayout);

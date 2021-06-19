@@ -4,8 +4,6 @@
 #include <memory>
 #include <functional>
 
-using namespace std;
-
 namespace Smorgasbord {
 
 struct IScope
@@ -120,7 +118,7 @@ public:
 
 #define SMORGASBORD_CONCATTOKENS(x, y) x##y
 #define SMORGASBORD_CREATEIDENTIFIER(x, y) SMORGASBORD_CONCATTOKENS(x, y)
-#define SMORGASBORD_CREATESCOPE(scopeType, targetType) unique_ptr< scopeType<targetType> >(new scopeType<targetType>(*this));
+#define SMORGASBORD_CREATESCOPE(scopeType, targetType) std::unique_ptr< scopeType<targetType> >(new scopeType<targetType>(*this));
 #define Scope(target, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__);
 #define ScopeAlias(target, alias, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__); auto &alias = target;
 #define ScopeExit(onExit) OnExitScope SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__)(onExit);

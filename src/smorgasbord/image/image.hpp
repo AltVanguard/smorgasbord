@@ -5,17 +5,14 @@
 
 #include <vector>
 
-using namespace std;
-using namespace glm;
-
 namespace Smorgasbord {
 
 class Image
 {
 public:
-	vector<uint8_t> data;
+	std::vector<uint8_t> data;
 	// width, height (in pixels)
-	uvec2 imageSize;
+	glm::uvec2 imageSize;
 	// size of the array holding the image data (in bytes)
 	uint32_t dataSize;
 	// size of one pixel (in bytes)
@@ -30,19 +27,19 @@ public:
 public:
 	Image()
 	{
-		this->imageSize = uvec2(0, 0);
+		this->imageSize = glm::uvec2(0, 0);
 		this->pixelSize = 4;
 		
 		UpdateCached();
 	}
 	
-	Image(uvec2 imageSize, uint32_t pixelSize = 4)
+	Image(glm::uvec2 imageSize, uint32_t pixelSize = 4)
 	{
 		Init(imageSize, pixelSize);
 	}
 	
 public:
-	void Init(uvec2 imageSize, uint32_t pixelSize = 4)
+	void Init(glm::uvec2 imageSize, uint32_t pixelSize = 4)
 	{
 		this->imageSize = imageSize;
 		this->pixelSize = pixelSize;

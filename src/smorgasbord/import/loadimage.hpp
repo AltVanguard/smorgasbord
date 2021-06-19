@@ -6,17 +6,15 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace Smorgasbord {
 
 class Image;
 
-shared_ptr<Image> LoadImage(string filename);
-void SaveImage(Image& image, string filename);
+std::shared_ptr<Image> LoadImage(std::string filename);
+void SaveImage(Image& image, std::string filename);
 
-shared_ptr<Image> LoadImagePNG(string filename);
-void SaveImagePNG(Image& image, string filename);
+std::shared_ptr<Image> LoadImagePNG(std::string filename);
+void SaveImagePNG(Image& image, std::string filename);
 
 }
 

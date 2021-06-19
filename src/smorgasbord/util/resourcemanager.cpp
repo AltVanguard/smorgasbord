@@ -9,22 +9,22 @@ Smorgasbord::ResourceReference::ResourceReference()
 { }
 
 Smorgasbord::ResourceReference::ResourceReference(
-	shared_ptr<Smorgasbord::ResourceManager> resourceManager,
-	const string &relativePath)
+	std::shared_ptr<Smorgasbord::ResourceManager> resourceManager,
+	const std::string &relativePath)
 	: rmRef(resourceManager), path(relativePath)
 { }
 
 Smorgasbord::ResourceReference Smorgasbord::ResourceReference::Get(
-	string relativePath)
+	std::string relativePath)
 {
 	/// absolute path within ResourceManager, not necessarily truly absolute
-	string absolutePath;
+	std::string absolutePath;
 	
 	/// ':' is there because ResourceManager later might support
 	/// packeged assets so the absolute path could even be like
 	/// base/path/path/to.package:relative/path/to.asset
 	size_t lastSlashPos = this->path.find_last_of("\\/:");
-	if (lastSlashPos == string::npos)
+	if (lastSlashPos == std::string::npos)
 	{
 		absolutePath = relativePath;
 	}
@@ -37,9 +37,9 @@ Smorgasbord::ResourceReference Smorgasbord::ResourceReference::Get(
 	return rmRef.lock()->Get(absolutePath);
 }
 
-unique_ptr<istream> Smorgasbord::ResourceReference::OpenRead()
+std::unique_ptr<std::istream> Smorgasbord::ResourceReference::OpenRead()
 {
-	shared_ptr<ResourceManager> rm = this->rmRef.lock();
+	std::shared_ptr<ResourceManager> rm = this->rmRef.lock();
 	
 	if (static_cast<bool>(rm))
 	{
@@ -50,9 +50,9 @@ unique_ptr<istream> Smorgasbord::ResourceReference::OpenRead()
 	return { };
 }
 
-void Smorgasbord::ResourceReference::ReadInto(stringstream &stream)
+void Smorgasbord::ResourceReference::ReadInto(std::stringstream &stream)
 {
-	unique_ptr<istream> file = OpenRead();
+	std::unique_ptr<std::istream> file = OpenRead();
 	if (static_cast<bool>(file))
 	{
 		stream << file->rdbuf();
@@ -63,13 +63,13 @@ void Smorgasbord::ResourceReference::ReadInto(stringstream &stream)
 	}
 }
 
-string Smorgasbord::ResourceReference::GetTextContents()
+std::string Smorgasbord::ResourceReference::GetTextContents()
 {
-	unique_ptr<istream> file = OpenRead();
+	std::unique_ptr<std::istream> file = OpenRead();
 	if (static_cast<bool>(file))
 	{
-		return static_cast<stringstream const&>(
-			stringstream() << file->rdbuf()).str();
+		return static_cast<std::stringstream const&>(
+			std::stringstream() << file->rdbuf()).str();
 	}
 	else
 	{
@@ -78,14 +78,14 @@ string Smorgasbord::ResourceReference::GetTextContents()
 	}
 }
 
-vector<uint8_t> Smorgasbord::ResourceReference::GetBinaryContents()
+std::vector<uint8_t> Smorgasbord::ResourceReference::GetBinaryContents()
 {
-	unique_ptr<istream> file = OpenRead();
+	std::unique_ptr<std::istream> file = OpenRead();
 	if (static_cast<bool>(file))
 	{
-		return vector<uint8_t>(
-			istreambuf_iterator<char>(*file),
-			istreambuf_iterator<char>());
+		return std::vector<uint8_t>(
+			std::istreambuf_iterator<char>(*file),
+			std::istreambuf_iterator<char>());
 	}
 	else
 	{
@@ -94,22 +94,22 @@ vector<uint8_t> Smorgasbord::ResourceReference::GetBinaryContents()
 	}
 }
 
-Smorgasbord::ResourceManager::ResourceManager(string basepath)
+Smorgasbord::ResourceManager::ResourceManager(std::string basepath)
 {
 	this->basepath = basepath;
 }
 
-string Smorgasbord::ResourceManager::GetPath(string path)
+std::string Smorgasbord::ResourceManager::GetPath(std::string path)
 {
 	return basepath + path;
 }
 
-unique_ptr<istream> Smorgasbord::ResourceManager::OpenRead(string path)
+std::unique_ptr<std::istream> Smorgasbord::ResourceManager::OpenRead(std::string path)
 {
-	string relativePath = GetPath(path);
+	std::string relativePath = GetPath(path);
 	
-	unique_ptr<ifstream> file =
-		make_unique<ifstream>(relativePath.c_str(), ios_base::binary);
+	std::unique_ptr<std::ifstream> file =
+		std::make_unique<std::ifstream>(relativePath.c_str(), std::ios_base::binary);
 	
 	if (!file->is_open())
 	{

@@ -9,8 +9,6 @@
 
 // TODO: guard dll loading with WIN32
 
-using namespace std;
-
 namespace Smorgasbord {
 
 class GL4Loader {
@@ -26,7 +24,7 @@ public:
 #undef SMORGASBORD_GL_LOAD_PROCEDURE
 
 public:
-	GL4Loader(string library_override = "");
+	GL4Loader(std::string library_override = "");
 	~GL4Loader();
 	
 	void SetIsEnabled(GLenum key, bool value) const

@@ -5,14 +5,14 @@
 #include <smorgasbord/import/loadimage.hpp>
 #include <smorgasbord/util/log.hpp>
 
-shared_ptr<Smorgasbord::Texture> Smorgasbord::LoadTexture(
-	shared_ptr<Device> device, string filename)
+std::shared_ptr<Smorgasbord::Texture> Smorgasbord::LoadTexture(
+	std::shared_ptr<Device> device, std::string filename)
 {
-	shared_ptr<Image> img = LoadImage(filename);
+	std::shared_ptr<Image> img = LoadImage(filename);
 	
 	if (img)
 	{
-		shared_ptr<Texture> tex =
+		std::shared_ptr<Texture> tex =
 			device->CreateTexture(
 				img->imageSize,
 				TextureFormat::RGBA_8_8_8_8_UNorm);
@@ -25,6 +25,6 @@ shared_ptr<Smorgasbord::Texture> Smorgasbord::LoadTexture(
 	else
 	{
 		LogE("Could not load image, returning empty texture.");
-		return shared_ptr<Texture>();
+		return std::shared_ptr<Texture>();
 	}
 }

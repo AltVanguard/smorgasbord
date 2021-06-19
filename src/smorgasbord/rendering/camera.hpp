@@ -13,20 +13,17 @@
 
 // TODO: implement SetView(vec3 location, vec3 up, vec3 direction)
 
-using namespace glm;
-using namespace std;
-
 namespace Smorgasbord {
 
 class Camera : ScenePlacedObject
 {
 private:
-	string name;
+	std::string name;
 	bool isValid = false;
 	bool isPerspective = true;
 	
-	mat4 projection;
-	mat4 view;
+	glm::mat4 projection;
+	glm::mat4 view;
 	
 public:
 	// common physical parameters
@@ -49,20 +46,20 @@ public:
 public:
 	Camera();
 	
-	mat4 GetProjectionMatrix();
-	mat4 GetViewMatrix();
+	glm::mat4 GetProjectionMatrix();
+	glm::mat4 GetViewMatrix();
 	
-	void SetView(vec3 location, vec3 rotation);
-	void SetView(vec3 location, vec3 up, vec3 direction); // TODO
-	void SetViewMatrix(const mat4& mat);
+	void SetView(glm::vec3 location, glm::vec3 rotation);
+	void SetView(glm::vec3 location, glm::vec3 up, glm::vec3 direction); // TODO
+	void SetViewMatrix(const glm::mat4& mat);
 	
 	// SceneObject interface
-	virtual string GetType() override
+	virtual std::string GetType() override
 	{
 		return "Camera";
 	}
 	
-	virtual string GetName() override
+	virtual std::string GetName() override
 	{
 		return name;
 	}

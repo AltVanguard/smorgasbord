@@ -12,9 +12,6 @@
 /// TODO: stencil buffer handling/clearing
 /// TODO: set some debug name to GraphicsShader::name if possible
 
-using namespace glm;
-using namespace std;
-
 #define SMORGASBORD_GL4_UNBIND
 
 namespace Smorgasbord {
@@ -53,7 +50,7 @@ public:
 
 struct GL4IndexBufferRef
 {
-	shared_ptr<GL4Buffer> buffer;
+	std::shared_ptr<GL4Buffer> buffer;
 	GLenum dataType = GL_NONE;
 	
 	GL4IndexBufferRef();
@@ -87,7 +84,7 @@ private:
 	
 public:
 	GL4Texture(
-		GL4Device& device, uvec2 imageSize, TextureFormat textureFormat);
+		GL4Device& device, glm::uvec2 imageSize, TextureFormat textureFormat);
 	~GL4Texture();
 	
 	void Bind(int slot);
@@ -103,7 +100,7 @@ public:
 	// Texture interface
 	virtual void Upload(Image &image) override;
 	virtual void Verify(Image &image) override;
-	virtual shared_ptr<Image> Download() override;
+	virtual std::shared_ptr<Image> Download() override;
 	
 	GLuint GetID()
 	{
@@ -133,11 +130,11 @@ class GL4RasterizationShader : public RasterizationShader
 private:
 	const GL4Loader &gl;
 	TextureSamplerSet *samplers = nullptr;
-	map<ParameterBuffer*, GL4BindCommand> parameterBuffers;
-	map<Buffer*, string> buffers;
-	map<RasterizationStage, GLuint> sourceIDs;
+	std::map<ParameterBuffer*, GL4BindCommand> parameterBuffers;
+	std::map<Buffer*, std::string> buffers;
+	std::map<RasterizationStage, GLuint> sourceIDs;
 	GLuint programID = 0;
-	set<string> enumerableConstants;
+	std::set<std::string> enumerableConstants;
 	/// Changes to the source are no longer allowed after compilation, such as
 	/// calling Set() with a new ParameterBuffer of calling AddText()
 	/// For these call Clone() or create a shader from scratch
@@ -145,7 +142,7 @@ private:
 	bool canCompile = true;
 	
 public:
-	GL4RasterizationShader(GL4Device& device, string name = "");
+	GL4RasterizationShader(GL4Device& device, std::string name = "");
 	
 	void ResetBindings();
 	void SetConstantField(
@@ -213,10 +210,10 @@ private:
 	GL4Device& device;
 	const GL4Loader &gl;
 	bool isFirstRun = true;
-	unordered_map<GL4VAOKey, GLuint, GL4VAOKeyHash> vaos;
-	shared_ptr<IGL4FrameBuffer> frameBuffer;
+	std::unordered_map<GL4VAOKey, GLuint, GL4VAOKeyHash> vaos;
+	std::shared_ptr<IGL4FrameBuffer> frameBuffer;
 	const Pass *passAddress = nullptr;
-	shared_ptr<GL4RasterizationShader> shader;
+	std::shared_ptr<GL4RasterizationShader> shader;
 	GeometryLayout geometryLayout;
 	RasterizationPipelineState pipelineState;
 	
@@ -225,14 +222,14 @@ public:
 	~GL4CommandBuffer();
 	
 	// CommandBuffer interface
-	virtual void SetFrameBuffer(shared_ptr<FrameBuffer> framebuffer) override;
+	virtual void SetFrameBuffer(std::shared_ptr<FrameBuffer> framebuffer) override;
 	virtual void StartPass(const Pass &pass) override;
 	virtual void SetPipeline(
-		shared_ptr<RasterizationShader> shader,
+		std::shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
 		const RasterizationPipelineState &pipelineState) override;
 	virtual void Draw(
-		shared_ptr<Buffer> vertexBuffer,
+		std::shared_ptr<Buffer> vertexBuffer,
 		IndexBufferRef indexBuffer,
 		uint32_t startIndex,
 		uint32_t numVertices,
@@ -254,8 +251,8 @@ public:
 	// FrameBuffer interface
 	virtual void SetColor(
 		uint32_t attachementIndex,
-		shared_ptr<Texture> color) override;
-	virtual void SetDepth(shared_ptr<Texture> depth) override;
+		std::shared_ptr<Texture> color) override;
+	virtual void SetDepth(std::shared_ptr<Texture> depth) override;
 	
 	// IGL4FrameBuffer interface
 	virtual GLuint GetID() override;
@@ -273,8 +270,8 @@ public:
 	// FrameBuffer interface
 	virtual void SetColor(
 		uint32_t attachmentIndex,
-		shared_ptr<Texture> color) override;
-	virtual void SetDepth(shared_ptr<Texture> depth) override;
+		std::shared_ptr<Texture> color) override;
+	virtual void SetDepth(std::shared_ptr<Texture> depth) override;
 	
 	// IGL4FrameBuffer interface
 	virtual GLuint GetID() override;
@@ -284,13 +281,13 @@ public:
 
 class GL4SwapChain : public SwapChain
 {
-	vector<shared_ptr<FrameBuffer>> frameBuffers;
+	std::vector<std::shared_ptr<FrameBuffer>> frameBuffers;
 	
 public:
 	GL4SwapChain(GL4Device& device);
 	
 	// SwapChain interface
-	virtual vector<shared_ptr<FrameBuffer>> GetFrameBuffers() override;
+	virtual std::vector<std::shared_ptr<FrameBuffer>> GetFrameBuffers() override;
 	virtual uint32_t GetLength() override;
 	virtual uint32_t Aquire() override;
 	virtual uint32_t GetCurrentIndex() override;
@@ -300,7 +297,7 @@ class GL4Queue : public Queue
 {
 public:
 	// Queue interface
-	virtual void Submit(shared_ptr<CommandBuffer> commandBuffer) override;
+	virtual void Submit(std::shared_ptr<CommandBuffer> commandBuffer) override;
 	//virtual void Present() override { }
 };
 
@@ -318,21 +315,21 @@ public:
 
 	// Device interface
 	virtual const DeviceInfo &GetDeviceInfo() const override;
-	virtual vector<shared_ptr<Queue>> GetQueues() override;
+	virtual std::vector<std::shared_ptr<Queue>> GetQueues() override;
 	//virtual shared_ptr<Queue> GetDisplayQueue() override;
-	virtual shared_ptr<SwapChain> CreateSwapChain(
+	virtual std::shared_ptr<SwapChain> CreateSwapChain(
 		uint32_t preferredLength = 0) override;
-	virtual shared_ptr<FrameBuffer> CreateFrameBuffer() override;
-	virtual shared_ptr<CommandBuffer> CreateCommandBuffer() override;
-	virtual shared_ptr<RasterizationShader> CreateRasterizationShader(
-		string name = "") override;
-	virtual shared_ptr<Buffer> CreateBuffer(
+	virtual std::shared_ptr<FrameBuffer> CreateFrameBuffer() override;
+	virtual std::shared_ptr<CommandBuffer> CreateCommandBuffer() override;
+	virtual std::shared_ptr<RasterizationShader> CreateRasterizationShader(
+		std::string name = "") override;
+	virtual std::shared_ptr<Buffer> CreateBuffer(
 		BufferType bufferType,
 		BufferUsageType accessType,
 		BufferUsageFrequency accessFrequency,
 		uint32_t size) override;
-	virtual shared_ptr<Texture> CreateTexture(
-		uvec2 imageSize,
+	virtual std::shared_ptr<Texture> CreateTexture(
+		glm::uvec2 imageSize,
 		TextureFormat textureFormat) override;
 };
 

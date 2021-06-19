@@ -6,14 +6,12 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace Smorgasbord {
 
 class Texture;
 class Device;
 
-shared_ptr<Texture> LoadTexture(shared_ptr<Device> device, string filename);
+std::shared_ptr<Texture> LoadTexture(std::shared_ptr<Device> device, std::string filename);
 
 }
 

@@ -124,6 +124,8 @@ allocation, upload, etc.
 /// TODO: PrimitiveTopology: Support for *Adjacency primitive topologies.
 ///		Only used in geometry shaders, otherwise ignored
 /// TODO?: *_MOD macros could be hidden with BOOST_PP_OVERLOAD
+/// TODO: Customizable filtering method to field names (akin to filtering "glm::")
+///		Currently one has to manually specify the shader field type for each custom type field
 
 #define SMORGASBORD_CONTANTBUFFER(name, instance, body) \
 	struct name { \
@@ -154,9 +156,6 @@ allocation, upload, etc.
 	DepthAttachment name = enumerator.Add(&name, #type, #name)
 #define SMORGASBORD_DEPTH_ATTACHMENT_MOD(type, name, ...) \
 	DepthAttachment name = enumerator.Add(&name, #type, #name, #__VA_ARGS__)
-
-using namespace glm;
-using namespace std;
 
 namespace Smorgasbord {
 
@@ -447,7 +446,7 @@ inline RasterizationStageFlag StageToFlag(RasterizationStage stage)
 	return (RasterizationStageFlag)(1u << (uint32_t)stage);
 }
 
-inline string StageToString(RasterizationStage stage)
+inline std::string StageToString(RasterizationStage stage)
 {
 	switch (stage)
 	{
@@ -466,7 +465,7 @@ inline string StageToString(RasterizationStage stage)
 	}
 }
 
-RasterizationStageFlag ParseShaderStageFlags(string stageFlagsString);
+RasterizationStageFlag ParseShaderStageFlags(std::string stageFlagsString);
 
 class Buffer
 {
@@ -499,7 +498,7 @@ public:
 		return bufferType;
 	}
 	
-	unique_ptr<IScope> GetScope(MappedDataAccessType mapAccessType)
+	std::unique_ptr<IScope> GetScope(MappedDataAccessType mapAccessType)
 	{
 		Map(mapAccessType);
 		return SMORGASBORD_CREATESCOPE(MapScope, Buffer);
@@ -508,13 +507,13 @@ public:
 
 struct IndexBufferRef
 {
-	shared_ptr<Buffer> buffer;
+	std::shared_ptr<Buffer> buffer;
 	IndexDataType dataType = IndexDataType::UInt8;
 	
 	IndexBufferRef()
 	{ }
 	
-	IndexBufferRef(shared_ptr<Buffer> _buffer, IndexDataType _dataType)
+	IndexBufferRef(std::shared_ptr<Buffer> _buffer, IndexDataType _dataType)
 		: buffer(_buffer), dataType(_dataType)
 	{ }
 	
@@ -528,10 +527,10 @@ struct ParameterBufferField
 {
 	void *p = nullptr;
 	uint32_t size = 0; // size of an array element in bytes
-	string type;
-	string name;
+	std::string type;
+	std::string name;
 	uint32_t arraySize = 0; // 0: not an array
-	string modifier;
+	std::string modifier;
 	
 	ParameterBufferField(
 		void *_p,
@@ -546,14 +545,19 @@ struct ParameterBufferField
 		, name(_name)
 		, arraySize(_arraySize)
 		, modifier(_modifier)
-	{ }
+	{
+		if (type.find("glm::") != std::string::npos)
+		{
+			type = type.substr(5);
+		}
+	}
 };
 
 class ParameterBufferFieldEnumerator
 {
 private:
-	vector<ParameterBufferField> fields;
-	string modifier;
+	std::vector<ParameterBufferField> fields;
+	std::string modifier;
 	uint32_t bufferSize = 0;
 	
 public:
@@ -565,7 +569,7 @@ public:
 		this->modifier = modifier;
 	}
 	
-	const string &GetModifier() const
+	const std::string &GetModifier() const
 	{
 		return modifier;
 	}
@@ -607,7 +611,7 @@ public:
 		return *p;
 	}
 	
-	const vector<ParameterBufferField> &GetFields() const
+	const std::vector<ParameterBufferField> &GetFields() const
 	{
 		return fields;
 	}
@@ -622,7 +626,7 @@ class ParameterBuffer
 {
 protected:
 	ParameterBufferFieldEnumerator enumerator;
-	shared_ptr<Buffer> gpuBuffer;
+	std::shared_ptr<Buffer> gpuBuffer;
 	bool isValid = false;
 	
 public:
@@ -635,14 +639,14 @@ public:
 	
 	virtual ~ParameterBuffer() { };
 	
-	void SetBuffer(shared_ptr<Buffer> buffer)
+	void SetBuffer(std::shared_ptr<Buffer> buffer)
 	{
 		/// We refrain from checking if the buffer is appropriate, because
 		/// it will be checked anyway when we actually use it
 		gpuBuffer = buffer;
 	}
 	
-	shared_ptr<Buffer> GetBuffer() const
+	std::shared_ptr<Buffer> GetBuffer() const
 	{
 		return gpuBuffer;
 	}
@@ -652,12 +656,12 @@ public:
 		isValid = false;
 	}
 	
-	const string &GetModifier() const
+	const std::string &GetModifier() const
 	{
 		return enumerator.GetModifier();
 	}
 	
-	const vector<ParameterBufferField> GetFields() const
+	const std::vector<ParameterBufferField> GetFields() const
 	{
 		return enumerator.GetFields();
 	}
@@ -671,18 +675,18 @@ public:
 class Texture
 {
 protected:
-	uvec2 size = vec2(0, 0);
+	glm::uvec2 size = glm::vec2(0, 0);
 	TextureFormat format = TextureFormat::RGBA_8_8_8_8_UNorm;
 	
 public:
-	Texture(uvec2 imageSize, TextureFormat textureFormat);
+	Texture(glm::uvec2 imageSize, TextureFormat textureFormat);
 	virtual ~Texture() { }
 	
 	virtual void Upload(Image &image) = 0;
 	virtual void Verify(Image &image) = 0;
-	virtual shared_ptr<Image> Download() = 0;
+	virtual std::shared_ptr<Image> Download() = 0;
 	
-	uvec2 GetSize()
+	glm::uvec2 GetSize()
 	{
 		return size;
 	}
@@ -696,10 +700,10 @@ public:
 class TextureSampler
 {
 public:
-	string type;
-	string name;
-	string modifier;
-	shared_ptr<Texture> texture;
+	std::string type;
+	std::string name;
+	std::string modifier;
+	std::shared_ptr<Texture> texture;
 	
 	SamplerFilter minify = SamplerFilter::Nearest;
 	SamplerFilter magnify = SamplerFilter::Nearest;
@@ -720,7 +724,7 @@ public:
 		ParseFilter(modifier);
 	}
 	
-	void ParseFilter(const string &text);
+	void ParseFilter(const std::string &text);
 	
 	RasterizationStageFlag GetStageMask()
 	{
@@ -728,7 +732,7 @@ public:
 		return RasterizationStageFlag::All;
 	}
 	
-	TextureSampler& operator= (shared_ptr<Texture> texture)
+	TextureSampler& operator= (std::shared_ptr<Texture> texture)
 	{
 		this->texture = texture;
 		return *this;
@@ -737,7 +741,7 @@ public:
 
 class TextureSamplerSetFieldEnumerator
 {
-	vector<TextureSampler*> samplers;
+	std::vector<TextureSampler*> samplers;
 	
 public:
 	TextureSampler Add(
@@ -750,7 +754,7 @@ public:
 		return { type, name, modifier };
 	}
 	
-	const vector<TextureSampler*> &GetSamplers() const
+	const std::vector<TextureSampler*> &GetSamplers() const
 	{
 		return samplers;
 	}
@@ -764,7 +768,7 @@ protected:
 public:
 	virtual ~TextureSamplerSet() { }
 	
-	const vector<TextureSampler*> &GetSamplers() const
+	const std::vector<TextureSampler*> &GetSamplers() const
 	{
 		return enumerator.GetSamplers();
 	}
@@ -773,9 +777,9 @@ public:
 class Attachment
 {
 protected:
-	string type;
-	string name;
-	string modifier;
+	std::string type;
+	std::string name;
+	std::string modifier;
 	
 	LoadOp loadOp = LoadOp::None;
 	StoreOp storeOp = StoreOp::None;
@@ -786,7 +790,12 @@ public:
 		const char *_name,
 		const char *_modifier)
 		: type(_type), name(_name), modifier(_modifier)
-	{ }
+	{
+		if (type.find("glm::") != std::string::npos)
+		{
+			type = type.substr(5);
+		}
+	}
 	
 	void SetToLoad()
 	{
@@ -798,17 +807,17 @@ public:
 		this->storeOp = StoreOp::Store;
 	}
 	
-	string GetType() const
+	std::string GetType() const
 	{
 		return type;
 	}
 	
-	string GetName() const
+	std::string GetName() const
 	{
 		return name;
 	}
 	
-	string GetModifier() const
+	std::string GetModifier() const
 	{
 		return modifier;
 	}
@@ -838,7 +847,7 @@ class ColorAttachment : public Attachment
 private:
 	uint32_t index = 0;
 	
-	vec4 clearColor = vec4(0,0,0,0);
+	glm::vec4 clearColor = glm::vec4(0,0,0,0);
 	
 public:
 	ColorAttachment(
@@ -849,7 +858,7 @@ public:
 		: Attachment(_type, _name, _modifier), index(_index)
 	{ }
 	
-	void SetToClear(vec4 clearColor = vec4(0,0,0,0))
+	void SetToClear(glm::vec4 clearColor = glm::vec4(0,0,0,0))
 	{
 		this->loadOp = LoadOp::Clear;
 		this->clearColor = clearColor;
@@ -860,7 +869,7 @@ public:
 		return index;
 	}
 	
-	vec4 GetClearColor() const
+	glm::vec4 GetClearColor() const
 	{
 		return clearColor;
 	}
@@ -915,7 +924,7 @@ class AttachmentEnumerator
 {
 private:
 	uint32_t nextIndex = 0;
-	vector<ColorAttachment*> colorAttachments;
+	std::vector<ColorAttachment*> colorAttachments;
 	DepthAttachment *depthAttachment = nullptr;
 	
 public:
@@ -942,7 +951,7 @@ public:
 		return { type, name, modifier };
 	}
 	
-	const vector<ColorAttachment*> &GetColorAttachments() const
+	const std::vector<ColorAttachment*> &GetColorAttachments() const
 	{
 		return colorAttachments;
 	}
@@ -987,7 +996,7 @@ protected:
 public:
 	virtual ~Pass() { }
 	
-	const vector<ColorAttachment*> &GetColorAttachments() const
+	const std::vector<ColorAttachment*> &GetColorAttachments() const
 	{
 		return enumerator.GetColorAttachments();
 	}
@@ -1007,25 +1016,25 @@ public:
 class RasterizationShader
 {
 public:
-	static const map<string, VariableType> &GetVariableTypes();
+	static const std::map<std::string, VariableType> &GetVariableTypes();
 
 protected:
-	string name;
+	std::string name;
 	ResourceReference sourceFile;
 	/// Source texts for each shader stage
-	map<RasterizationStage, string> sources;
+	std::map<RasterizationStage, std::string> sources;
 	/// To be merged with source file contents, like defines,
 	/// constants, etc.
-	map<RasterizationStage, stringstream> additionalSources;
+	std::map<RasterizationStage, std::stringstream> additionalSources;
 	
 public:
-	RasterizationShader(string name = "");
+	RasterizationShader(std::string name = "");
 	virtual ~RasterizationShader() { }
 	
 	void SetSource(ResourceReference source);
 	//void SetSource(const string &text); // TODO
-	void AddText(RasterizationStageFlag stageFlags, const string &text);
-	vector<stringstream> GetStageSources();
+	void AddText(RasterizationStageFlag stageFlags, const std::string &text);
+	std::vector<std::stringstream> GetStageSources();
 	
 	virtual void Set(TextureSamplerSet &samplers) = 0;
 	virtual void Set(
@@ -1033,7 +1042,7 @@ public:
 		SetOp setOp,
 		RasterizationStageFlag stageFlags = RasterizationStageFlag::All) = 0;
 	
-	string GetName()
+	std::string GetName()
 	{
 		return name;
 	}
@@ -1041,21 +1050,21 @@ public:
 	void Set(
 		ParameterBuffer &buffer,
 		SetOp setOp,
-		const string &stageflagsString = "a")
+		const std::string &stageflagsString = "a")
 	{
 		Set(buffer, setOp, ParseShaderStageFlags(stageflagsString));
 	}
 	
-	shared_ptr<RasterizationShader> Clone(string newName = "")
+	std::shared_ptr<RasterizationShader> Clone(std::string newName = "")
 	{
-		shared_ptr<RasterizationShader> shader;
+		std::shared_ptr<RasterizationShader> shader;
 		// TODO: copy sourceFile and sources (but not additionalSources)
 		return shader;
 	}
 	
 private:
-	string FilterComments(string text);
-	string ProcessIncludes(string text, ResourceReference &ref);
+	std::string FilterComments(std::string text);
+	std::string ProcessIncludes(std::string text, ResourceReference &ref);
 };
 
 class ComputeShader
@@ -1094,12 +1103,12 @@ struct RasterizationPipelineState
 {
 	BlendState blend;
 	DepthTestState depthTest;
-	ivec4 viewport = ivec4(0);
+	glm::ivec4 viewport = glm::ivec4(0);
 };
 
 struct Geometry
 {
-	shared_ptr<Buffer> vertexBuffer;
+	std::shared_ptr<Buffer> vertexBuffer;
 	IndexBufferRef indexBuffer;
 	uint32_t startIndex = 0;
 	uint32_t numVertices = 0;
@@ -1108,7 +1117,7 @@ struct Geometry
 struct Attribute
 {
 	uint32_t location = 0;
-	string name;
+	std::string name;
 	AttributeDataType dataType = AttributeDataType::Float;
 	uint32_t numComponents = 0;
 	AttributeAccessType accessType = AttributeAccessType::Float;
@@ -1131,7 +1140,7 @@ struct Attribute
 
 struct GeometryLayout
 {
-	vector<Attribute> attributes;
+	std::vector<Attribute> attributes;
 	PrimitiveTopology primitiveType = PrimitiveTopology::TriangleList;
 	uint32_t numVertsPerPatch = 0;
 	
@@ -1160,29 +1169,29 @@ struct GeometryLayout
 class FrameBuffer
 {
 protected:
-	uvec2 textureSize = uvec2(0, 0);
-	map<uint32_t, shared_ptr<Texture>> colorAttachments;
-	shared_ptr<Texture> depthAttachment;
+	glm::uvec2 textureSize = glm::uvec2(0, 0);
+	std::map<uint32_t, std::shared_ptr<Texture>> colorAttachments;
+	std::shared_ptr<Texture> depthAttachment;
 	
 public:
 	virtual ~FrameBuffer() { }
 	
 	virtual void SetColor(
 		uint32_t attachmentIndex,
-		shared_ptr<Texture> color) = 0;
-	virtual void SetDepth(shared_ptr<Texture> depth) = 0;
+		std::shared_ptr<Texture> color) = 0;
+	virtual void SetDepth(std::shared_ptr<Texture> depth) = 0;
 	
-	uvec2 GetSize()
+	glm::uvec2 GetSize()
 	{
 		return textureSize;
 	}
 	
-	shared_ptr<Texture> GetColor(uint32_t attachmentIndex)
+	std::shared_ptr<Texture> GetColor(uint32_t attachmentIndex)
 	{
 		return colorAttachments.at(attachmentIndex);
 	}
 	
-	shared_ptr<Texture> GetDepth()
+	std::shared_ptr<Texture> GetDepth()
 	{
 		return depthAttachment;
 	}
@@ -1193,14 +1202,14 @@ class CommandBuffer
 public:
 	virtual ~CommandBuffer() { }
 	
-	virtual void SetFrameBuffer(shared_ptr<FrameBuffer> framebuffer) = 0;
+	virtual void SetFrameBuffer(std::shared_ptr<FrameBuffer> framebuffer) = 0;
 	virtual void StartPass(const Pass &pass) = 0;
 	virtual void SetPipeline(
-		shared_ptr<RasterizationShader> shader,
+		std::shared_ptr<RasterizationShader> shader,
 		const GeometryLayout &geometryLayout,
 		const RasterizationPipelineState &pipeline) = 0;
 	virtual void Draw(
-		shared_ptr<Buffer> vertexBuffer,
+		std::shared_ptr<Buffer> vertexBuffer,
 		IndexBufferRef indexBuffer,
 		uint32_t startIndex,
 		uint32_t numVertices,
@@ -1222,7 +1231,7 @@ class SwapChain
 public:
 	virtual ~SwapChain() { }
 	
-	virtual vector<shared_ptr<FrameBuffer>> GetFrameBuffers() = 0;
+	virtual std::vector<std::shared_ptr<FrameBuffer>> GetFrameBuffers() = 0;
 	virtual uint32_t GetLength() = 0;
 	// Aquire() might need to be changed for the Vulkan backend
 	virtual uint32_t Aquire() = 0;
@@ -1234,13 +1243,13 @@ class Queue
 public:
 	virtual ~Queue() { }
 	
-	virtual void Submit(shared_ptr<CommandBuffer> commandBuffer) = 0;
+	virtual void Submit(std::shared_ptr<CommandBuffer> commandBuffer) = 0;
 	virtual void Present() = 0;
 };
 
 struct DeviceInfo
 {
-	string name;
+	std::string name;
 	bool isRasterizationSupported = false;
 	bool isComputeSupported = false;
 	bool isRaytraceSupported = false;
@@ -1253,28 +1262,28 @@ public:
 	virtual ~Device() { }
 	
 	virtual const DeviceInfo &GetDeviceInfo() const = 0;
-	virtual vector<shared_ptr<Queue>> GetQueues() = 0;
+	virtual std::vector<std::shared_ptr<Queue>> GetQueues() = 0;
 	/// returns a queue that can present and render graphics,
 	/// otherwise null
-	virtual shared_ptr<Queue> GetDisplayQueue() = 0;
+	virtual std::shared_ptr<Queue> GetDisplayQueue() = 0;
 	/// The length is decided by the device object if preferredLength == 0
 	/// If preferredLength is not supported, a swap chain with the nearest
 	/// available length returned
-	virtual shared_ptr<SwapChain> CreateSwapChain(
+	virtual std::shared_ptr<SwapChain> CreateSwapChain(
 		uint32_t preferredLength = 0) = 0;
-	virtual shared_ptr<FrameBuffer> CreateFrameBuffer() = 0;
-	virtual shared_ptr<CommandBuffer> CreateCommandBuffer() = 0;
-	virtual shared_ptr<RasterizationShader> CreateRasterizationShader(
-		string name = "") = 0;
-	virtual shared_ptr<Buffer> CreateBuffer(
+	virtual std::shared_ptr<FrameBuffer> CreateFrameBuffer() = 0;
+	virtual std::shared_ptr<CommandBuffer> CreateCommandBuffer() = 0;
+	virtual std::shared_ptr<RasterizationShader> CreateRasterizationShader(
+		std::string name = "") = 0;
+	virtual std::shared_ptr<Buffer> CreateBuffer(
 		BufferType bufferType, 
 		BufferUsageType accessType, 
 		BufferUsageFrequency accessFrequency, 
 		uint32_t size) = 0;
-	virtual shared_ptr<Texture> CreateTexture(
-		uvec2 imageSize,
+	virtual std::shared_ptr<Texture> CreateTexture(
+		glm::uvec2 imageSize,
 		TextureFormat textureFormat) = 0;
-	virtual vector<shared_ptr<CommandBuffer>> CreateCommandBuffers(
+	virtual std::vector<std::shared_ptr<CommandBuffer>> CreateCommandBuffers(
 		uint32_t num);
 };
 
@@ -1285,7 +1294,7 @@ public:
 	
 	virtual uint32_t GetNumDevices() = 0;
 	virtual const DeviceInfo &GetDeviceInfo(uint32_t index) const = 0;
-	virtual shared_ptr<Device> GetDevice(uint32_t index) = 0;
+	virtual std::shared_ptr<Device> GetDevice(uint32_t index) = 0;
 };
 
 }

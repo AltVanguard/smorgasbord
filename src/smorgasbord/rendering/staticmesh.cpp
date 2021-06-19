@@ -32,7 +32,7 @@ void Smorgasbord::MeshData::UpdateStatistics()
 		}
 		
 		boundingCenter = (boundingMin + boundingMax) / 2.0f;
-		vec3 boundingDiff = boundingMax - boundingMin;
+		glm::vec3 boundingDiff = boundingMax - boundingMin;
 		boundingScale = glm::max(
 			glm::max(boundingDiff.x, boundingDiff.y),
 			boundingDiff.z);
@@ -43,8 +43,8 @@ Smorgasbord::StaticMesh::StaticMesh()
 { }
 
 Smorgasbord::StaticMesh::StaticMesh(
-	shared_ptr<Smorgasbord::Device> device,
-	unique_ptr<Smorgasbord::MeshData> meshData)
+	std::shared_ptr<Smorgasbord::Device> device,
+	std::unique_ptr<Smorgasbord::MeshData> meshData)
 {
 	MeshData &mesh = *meshData;
 	
@@ -68,23 +68,23 @@ Smorgasbord::StaticMesh::StaticMesh(
 	uint32_t polyCount = uint32_t(mesh.polyCount);
 	uint32_t vertsPerFace = mesh.minVerticesPerFace;
 	
-	uint32_t bufferSize = sizeof(vec3) * polyCount * vertsPerFace;
+	uint32_t bufferSize = sizeof(glm::vec3) * polyCount * vertsPerFace;
 	uint32_t nStartByte = 0;
 	uint32_t tcStartByte = 0;
 	
 	if (hasNormal)
 	{
 		nStartByte = bufferSize;
-		bufferSize += sizeof(vec3) * polyCount * vertsPerFace;
+		bufferSize += sizeof(glm::vec3) * polyCount * vertsPerFace;
 	}
 	
 	if (hasTexCoord)
 	{
 		tcStartByte = bufferSize;
-		bufferSize += sizeof(vec2) * polyCount * vertsPerFace;
+		bufferSize += sizeof(glm::vec2) * polyCount * vertsPerFace;
 	}
 	
-	shared_ptr<Buffer> buffer = device->CreateBuffer(
+	std::shared_ptr<Buffer> buffer = device->CreateBuffer(
 		BufferType::Vertex,
 		BufferUsageType::Draw,
 		BufferUsageFrequency::Static,
@@ -94,7 +94,7 @@ Smorgasbord::StaticMesh::StaticMesh(
 		uint8_t* pBase = buffer->GetMappedData();
 		
 		{
-			vec3* p = (vec3*)pBase;
+			glm::vec3* p = (glm::vec3*)pBase;
 			for (uint32_t i = 0; i < polyCount; i++)
 			{
 				for (uint32_t j = 0; j < vertsPerFace; j++)
@@ -107,7 +107,7 @@ Smorgasbord::StaticMesh::StaticMesh(
 		
 		if (hasNormal)
 		{
-			vec3* n = reinterpret_cast<vec3*>(&pBase[nStartByte]);
+			glm::vec3* n = reinterpret_cast<glm::vec3*>(&pBase[nStartByte]);
 			for (uint32_t i = 0; i < polyCount; i++)
 			{
 				for (uint32_t j = 0; j < vertsPerFace; j++)
@@ -120,7 +120,7 @@ Smorgasbord::StaticMesh::StaticMesh(
 		
 		if (hasTexCoord)
 		{
-			vec2* tc = reinterpret_cast<vec2*>(&pBase[tcStartByte]);
+			glm::vec2* tc = reinterpret_cast<glm::vec2*>(&pBase[tcStartByte]);
 			for (uint32_t i = 0; i < polyCount; i++)
 			{
 				for (uint32_t j = 0; j < vertsPerFace; j++)
@@ -191,7 +191,7 @@ Smorgasbord::StaticMesh::~StaticMesh()
 { }
 
 void Smorgasbord::StaticMesh::Init(
-	shared_ptr<Buffer> vertexBuffer,
+	std::shared_ptr<Buffer> vertexBuffer,
 	IndexBufferRef indexBuffer,
 	uint32_t numVertices,
 	GeometryLayout &geometryLayout)

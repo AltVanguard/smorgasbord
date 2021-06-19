@@ -3,9 +3,6 @@
 
 #include <smorgasbord/window/window.hpp>
 
-using namespace std;
-using namespace glm;
-
 class SDLGL4Device;
 
 namespace Smorgasbord {
@@ -22,24 +19,24 @@ struct SdlGLContextDeleter
 
 class GLWindow
 {
-	uvec2 windowSize;
+	glm::uvec2 windowSize;
 
-	unique_ptr<SDL_Window, SdlWindowDeleter> window;
-	unique_ptr<remove_pointer_t<SDL_GLContext>, SdlGLContextDeleter>
+	std::unique_ptr<SDL_Window, SdlWindowDeleter> window;
+	std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, SdlGLContextDeleter>
 		glContext;
-	shared_ptr<SDLGL4Device> device;
+	std::shared_ptr<SDLGL4Device> device;
 	
 	bool quitSignaled = false;
 	
 public:
-	GLWindow(uvec2 _windowSize, const string &title);
+	GLWindow(glm::uvec2 _windowSize, const std::string &title);
 	virtual ~GLWindow();
 	
 	void EnterMainLoop(
 		std::function<void()> onDraw,
 		std::function<void(SDL_Event windowEvent)> onEvent);
 	
-	shared_ptr<Device> GetGL4Device();
+	std::shared_ptr<Device> GetGL4Device();
 	
 	void QuitMainLoop()
 	{

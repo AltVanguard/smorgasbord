@@ -14,24 +14,22 @@
 #include <string>
 #include <vector>
 
-using namespace glm;
-using namespace std;
 using namespace Smorgasbord;
 
-unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
-	unique_ptr<istream> _file)
+std::unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
+	std::unique_ptr<std::istream> _file)
 {
-	unique_ptr<MeshData> meshData(new MeshData());
+	std::unique_ptr<MeshData> meshData(new MeshData());
 	MeshData &mesh = *meshData;
-	istream &file = *_file;
+	std::istream &file = *_file;
 	
 	// Read file
 	
-	string line;
-	string token;
+	std::string line;
+	std::string token;
 	size_t spacePos;
 	size_t lastSpacePos;
-	stringstream stream; // helper stream
+	std::stringstream stream; // helper stream
 	
 	bool hasNormal = false;
 	bool hasTexCoord = false;
@@ -52,12 +50,12 @@ unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
 		getline(file, line);
 		
 		spacePos = line.find(' ');
-		string type = line.substr(0, spacePos); // line type
+		std::string type = line.substr(0, spacePos); // line type
 		
 		stream.clear(); // reset EOF flag if set
 		stream.str(line.substr(spacePos + 1));
 		
-		vec3 value;
+		glm::vec3 value;
 		if (type == "v") // vertex position
 		{
 			stream >> value.x >> value.y >> value.z;
@@ -72,7 +70,7 @@ unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
 		{
 			stream >> value.x >> value.y;
 			value.y = 1.0f - value.y; // flip y (obj -> opengl)
-			mesh.t.push_back(vec2(value.x, value.y));
+			mesh.t.push_back(glm::vec2(value.x, value.y));
 		}
 		else if (type == "f") // face
 		{
@@ -86,11 +84,11 @@ unique_ptr<Smorgasbord::MeshData> Smorgasbord::LoadOBJ(
 			int n = 0;
 			lastSpacePos = spacePos;
 			
-			while (lastSpacePos != string::npos)
+			while (lastSpacePos != std::string::npos)
 			{
 				spacePos = line.find(' ', spacePos + 1);
 				
-				if (spacePos == string::npos)
+				if (spacePos == std::string::npos)
 				{
 					token = line.substr(lastSpacePos + 1);
 				}

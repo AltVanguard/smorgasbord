@@ -47,9 +47,6 @@
 			[this](void) -> type { return this->getter();}, \
 			[this](const type &b){ this->setter(b); }))
 
-using namespace glm;
-using namespace std;
-
 namespace Smorgasbord {
 
 template<typename T>
@@ -134,8 +131,8 @@ public:
 
 struct SceneObjectPropertyField
 {
-	string type;
-	string name;
+	std::string type;
+	std::string name;
 	uint32_t size = 0; // in bytes
 	void *p = nullptr;
 	
@@ -147,8 +144,8 @@ struct SceneObjectPropertyField
 
 struct SceneObjectProperty
 {
-	string type;
-	string name;
+	std::string type;
+	std::string name;
 	bool hasGetter = false;
 	bool hasSetter = false;
 	uint32_t size = 0; // in bytes
@@ -173,8 +170,8 @@ struct SceneObjectProperty
 class SceneObjectPropertyEnumerator
 {
 private:
-	unordered_map<string, SceneObjectPropertyField> fields;
-	unordered_map<string, SceneObjectProperty> properties;
+	std::unordered_map<std::string, SceneObjectPropertyField> fields;
+	std::unordered_map<std::string, SceneObjectProperty> properties;
 	
 public:
 	template <typename T>
@@ -204,12 +201,12 @@ public:
 		return property;
 	}
 	
-	const unordered_map<string, SceneObjectPropertyField> &GetFields() const
+	const  std::unordered_map<std::string, SceneObjectPropertyField> &GetFields() const
 	{
 		return fields;
 	}
 	
-	const unordered_map<string, SceneObjectProperty> &GetProperties() const
+	const std::unordered_map<std::string, SceneObjectProperty> &GetProperties() const
 	{
 		return properties;
 	}
@@ -223,16 +220,16 @@ protected:
 public:
 	virtual ~SceneObject() { };
 	
-	virtual string GetType() = 0;
-	virtual string GetName() = 0;
+	virtual std::string GetType() = 0;
+	virtual std::string GetName() = 0;
 };
 
 class ScenePlacedObject : public SceneObject
 {
 public:
-	SMORGASBORD_PROPERTY_FIELD(vec3, position);
-	SMORGASBORD_PROPERTY_FIELD(quat, rotation);
-	SMORGASBORD_PROPERTY_FIELD(vec3, scale);
+	SMORGASBORD_PROPERTY_FIELD(glm::vec3, position);
+	SMORGASBORD_PROPERTY_FIELD(glm::quat, rotation);
+	SMORGASBORD_PROPERTY_FIELD(glm::vec3, scale);
 };
 
 }

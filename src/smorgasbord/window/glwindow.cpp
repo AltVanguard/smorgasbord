@@ -62,9 +62,9 @@ public:
 		, context(_context)
 	{ }
 	
-	virtual shared_ptr<Queue> GetDisplayQueue() override
+	virtual std::shared_ptr<Queue> GetDisplayQueue() override
 	{
-		return make_shared<SDLGL4Queue>(this->window);
+		return std::make_shared<SDLGL4Queue>(this->window);
 	}
 	
 	void MakeCurrent()
@@ -73,7 +73,7 @@ public:
 	}
 };
 
-GLWindow::GLWindow(uvec2 _windowSize, const string &title)
+GLWindow::GLWindow(glm::uvec2 _windowSize, const std::string &title)
 	: windowSize(_windowSize)
 {
 	// Init SDL
@@ -102,11 +102,11 @@ GLWindow::GLWindow(uvec2 _windowSize, const string &title)
 			windowSize.x, windowSize.y,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE) };
 	
-	AssertE(window, string("SDL Error: ") + SDL_GetError());
+	AssertE(window, std::string("SDL Error: ") + SDL_GetError());
 	
 	glContext = decltype(glContext){ SDL_GL_CreateContext(window.get()) };
 	
-	device = make_shared<SDLGL4Device>(window.get(), glContext.get());
+	device = std::make_shared<SDLGL4Device>(window.get(), glContext.get());
 	device->MakeCurrent();
 	
 	//SDL_GL_SetSwapInterval(1); // TODO: provide setting to enable/disable
@@ -117,7 +117,7 @@ GLWindow::~GLWindow()
 	SDL_Quit();
 }
 
-shared_ptr<Device> GLWindow::GetGL4Device()
+std::shared_ptr<Device> GLWindow::GetGL4Device()
 {
 	return device;
 }

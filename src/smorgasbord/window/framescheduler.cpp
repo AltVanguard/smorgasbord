@@ -2,8 +2,6 @@
 
 #include <glm/glm.hpp>
 
-using namespace glm;
-
 constexpr double fadeTime = 5.0;
 constexpr double fadeExponent = 3.0;
 

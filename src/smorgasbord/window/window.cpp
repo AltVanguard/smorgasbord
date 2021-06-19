@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-Smorgasbord::Window::Window(uvec2 _windowSize, const string &title)
+Smorgasbord::Window::Window(glm::uvec2 _windowSize, const std::string &title)
 	: windowSize(_windowSize)
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -21,7 +21,7 @@ Smorgasbord::Window::Window(uvec2 _windowSize, const string &title)
 			windowSize.x, windowSize.y,
 			SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE) };
 	
-	AssertE(window, string("SDL Error: ") + SDL_GetError());
+	AssertE(window, std::string("SDL Error: ") + SDL_GetError());
 }
 
 Smorgasbord::Window::~Window()

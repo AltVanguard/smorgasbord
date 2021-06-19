@@ -21,8 +21,6 @@
 #	define SMORGASBORD_CURRENT_FUNCTION ""
 #endif
 
-using namespace std;
-
 namespace Smorgasbord {
 
 enum class LogAssertLevel
@@ -38,12 +36,12 @@ class Log
 public:
 	
 private:
-	ostream* stream;
+	std::ostream* stream;
 	LogAssertLevel assertLevel;
 	
 public:
 	Log(
-		ostream& stream = std::cout,
+		std::ostream& stream = std::cout,
 		LogAssertLevel assertLevel = LogAssertLevel::FatalError)
 	{
 		SetStream(stream);
@@ -56,20 +54,20 @@ public:
 	}
 	
 	// Oneline info
-	void O(const string& message)
+	void O(const std::string& message)
 	{
-		*this->stream << "INFO " << message << endl;
+		*this->stream << "INFO " << message << std::endl;
 	}
 	
 	// Info
-	void I(const string& caller, const string& message)
+	void I(const std::string& caller, const std::string& message)
 	{
 		*this->stream << "INFO ";
 		PrintMessage(caller, message);
 	}
 	
 	// Warning
-	void W(const string& caller, const string& message)
+	void W(const std::string& caller, const std::string& message)
 	{
 		*this->stream << "WARNING ";
 		PrintMessage(caller, message);
@@ -77,7 +75,7 @@ public:
 	}
 	
 	// Error
-	inline void E(const string& caller, const string& message)
+	inline void E(const std::string& caller, const std::string& message)
 	{
 		*this->stream << "ERROR ";
 		PrintMessage(caller, message);
@@ -85,28 +83,28 @@ public:
 	}
 	
 	// Fatal error (causes program termination)
-	inline void F(const string& caller, const string& message)
+	inline void F(const std::string& caller, const std::string& message)
 	{
 		*this->stream << "FATAL ERROR ";
 		PrintMessage(caller, message);
 		LogAssert(false);
-		throw runtime_error(message);
+		throw std::runtime_error(message);
 		//abort();
 	}
 	
-	inline void SetStream(ostream& stream)
+	inline void SetStream(std::ostream& stream)
 	{
 		this->stream = &stream;
 	}
 	
 private:
-	void PrintMessage(const string& caller, const string& message)
+	void PrintMessage(const std::string& caller, const std::string& message)
 	{
 #if defined(DEBUG) | SMORGASBORD_PRINT_CALLER_IN_RELEASE
 		*this->stream <<
-			"in \"" << caller << "\":\n  " << message << "\n" << endl;
+			"in \"" << caller << "\":\n  " << message << "\n" << std::endl;
 #else
-		*this->stream << message << "\n" << endl;
+		*this->stream << message << "\n" << std::endl;
 #endif
 	}
 	

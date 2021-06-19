@@ -10,8 +10,6 @@
 /// FrameScheduler is useful if you are running on batteries and you want to
 /// hold back rendering to reduce battery consumption
 
-using namespace std;
-
 namespace Smorgasbord {
 
 enum class FrameScheduleMode

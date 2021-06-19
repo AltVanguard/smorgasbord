@@ -23,22 +23,22 @@ bool Smorgasbord::FlyCameraController::HandleEvent(SDL_Event windowEvent)
 		case SDL_SCANCODE_W:
 		case SDL_SCANCODE_UP:
 			camera->SetViewMatrix(
-				Translate(vec3(0, 0, 0.1f)) * camera->GetViewMatrix());
+				Translate(glm::vec3(0, 0, 0.1f)) * camera->GetViewMatrix());
 			break;
 		case SDL_SCANCODE_S:
 		case SDL_SCANCODE_DOWN:
 			camera->SetViewMatrix(
-				Translate(vec3(0, 0, -0.1f)) * camera->GetViewMatrix());
+				Translate(glm::vec3(0, 0, -0.1f)) * camera->GetViewMatrix());
 			break;
 		case SDL_SCANCODE_A:
 		case SDL_SCANCODE_LEFT:
 			camera->SetViewMatrix(
-				Translate(vec3(0.1f, 0, 0)) * camera->GetViewMatrix());
+				Translate(glm::vec3(0.1f, 0, 0)) * camera->GetViewMatrix());
 			break;
 		case SDL_SCANCODE_D:
 		case SDL_SCANCODE_RIGHT:
 			camera->SetViewMatrix(
-				Translate(vec3(-0.1f, 0, 0)) * camera->GetViewMatrix());
+				Translate(glm::vec3(-0.1f, 0, 0)) * camera->GetViewMatrix());
 			break;
 		case SDL_SCANCODE_SPACE:
 			// invalidate on space
@@ -68,7 +68,7 @@ bool Smorgasbord::FlyCameraController::HandleEvent(SDL_Event windowEvent)
 		{
 		case SDL_BUTTON_LEFT:
 		{
-			vec2 mousePos = vec2(
+			glm::vec2 mousePos = glm::vec2(
 				(float)windowEvent.button.x, (float)windowEvent.button.y);
 			break;
 		}
@@ -91,9 +91,9 @@ bool Smorgasbord::FlyCameraController::HandleEvent(SDL_Event windowEvent)
 		
 	case SDL_MOUSEMOTION:
 	{
-		vec2 mouseMotion = vec2(
+		glm::vec2 mouseMotion = glm::vec2(
 			(float)windowEvent.motion.x, (float)windowEvent.motion.y);
-		vec2 mousePos = vec2(
+		glm::vec2 mousePos = glm::vec2(
 			(float)windowEvent.button.x, (float)windowEvent.button.y);
 		///cout << mousePos.x << " " << mousePos.y << " "
 		/// << mouseMotion.x << " " << mouseMotion.y << endl;
