@@ -1,5 +1,4 @@
-#ifndef LOADOBJ_HPP
-#define LOADOBJ_HPP
+#pragma once
 
 #include <smorgasbord/rendering/staticmesh.hpp>
 
@@ -11,6 +10,3 @@ namespace Smorgasbord {
 std::unique_ptr<MeshData> LoadOBJ(std::unique_ptr<std::istream> file);
 
 }
-
-
-#endif // LOADOBJ_HPP

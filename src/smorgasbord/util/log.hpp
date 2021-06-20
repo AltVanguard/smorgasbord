@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_LOG_HPP
-#define SMORGASBORD_LOG_HPP
+#pragma once
 
 #include <fmt/format.h>
 
@@ -135,5 +134,3 @@ extern Log mainLog;
 	SMORGASBORD_CURRENT_FUNCTION, fmt::format(__VA_ARGS__)); }
 #define AssertE(check, ...) if (!(check)) { Smorgasbord::mainLog.E( \
 	SMORGASBORD_CURRENT_FUNCTION, fmt::format(__VA_ARGS__)); }
-
-#endif // SMORGASBORD_LOG_HPP

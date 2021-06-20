@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_WINDOW_HPP
-#define SMORGASBORD_WINDOW_HPP
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
@@ -39,5 +38,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_WINDOW_HPP

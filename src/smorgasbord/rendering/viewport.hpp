@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_VIEWPORT_HPP
-#define SMORGASBORD_VIEWPORT_HPP
+#pragma once
 
 #include "transform.hpp"
 
@@ -57,5 +56,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_VIEWPORT_HPP

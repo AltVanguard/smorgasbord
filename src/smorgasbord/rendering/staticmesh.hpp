@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_STATICMESH_HPP
-#define SMORGASBORD_STATICMESH_HPP
+#pragma once
 
 #include <smorgasbord/gpu/gpuapi.hpp>
 
@@ -70,5 +69,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_STATICMESH_HPP

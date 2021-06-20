@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_TIMER_HPP
-#define SMORGASBORD_TIMER_HPP
+#pragma once
 
 #ifdef WIN32 // Windows
 	#include <windows.h>
@@ -202,5 +201,3 @@ public:
 #endif
 
 }
-
-#endif // SMORGASBORD_TIMER_HPP

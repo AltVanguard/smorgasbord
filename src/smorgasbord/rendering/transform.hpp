@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_TRANSFORM_HPP
-#define SMORGASBORD_TRANSFORM_HPP
+#pragma once
 
 #include <glm/glm.hpp>
 
@@ -51,5 +50,3 @@ glm::mat4 GetOrthographicProjection(
 	float clipFar);
 
 }
-
-#endif // SMORGASBORD_TRANSFORM_HPP

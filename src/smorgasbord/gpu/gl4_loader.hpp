@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_GL4_LOADER_HPP
-#define SMORGASBORD_GL4_LOADER_HPP
+#pragma once
 
 #include <GL/glcorearb.h>
 
@@ -45,5 +44,3 @@ private:
 };
 
 }
-
-#endif // SMORGASBORD_GL4_LOADER_HPP

@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_GLWINDOW_HPP
-#define SMORGASBORD_GLWINDOW_HPP
+#pragma once
 
 #include <smorgasbord/window/window.hpp>
 
@@ -45,5 +44,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_GLWINDOW_HPP

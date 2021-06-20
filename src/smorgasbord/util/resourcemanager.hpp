@@ -1,5 +1,4 @@
-#ifndef RESOURCEMANAGER_HPP
-#define RESOURCEMANAGER_HPP
+#pragma once
 
 #include <string>
 #include <memory>
@@ -79,5 +78,3 @@ struct InternalBase
 };
 
 }
-
-#endif // RESOURCEMANAGER_HPP

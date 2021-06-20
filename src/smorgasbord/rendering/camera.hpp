@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_CAMERA_HPP
-#define SMORGASBORD_CAMERA_HPP
+#pragma once
 
 #include "scenegraph.hpp"
 #include "transform.hpp"
@@ -142,5 +141,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_CAMERA_HPP

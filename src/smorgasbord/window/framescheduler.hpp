@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_FRAMESCHEDULER_HPP
-#define SMORGASBORD_FRAMESCHEDULER_HPP
+#pragma once
 
 #include "smorgasbord/util/log.hpp"
 #include "smorgasbord/util/timer.hpp"
@@ -50,5 +49,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_FRAMESCHEDULER_HPP

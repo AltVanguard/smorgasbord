@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_GPU_GPUAPI_HPP
-#define SMORGASBORD_GPU_GPUAPI_HPP
+#pragma once
 
 #include <smorgasbord/util/resourcemanager.hpp>
 #include <smorgasbord/util/scope.hpp>
@@ -1298,5 +1297,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_GPU_GPUAPI_HPP

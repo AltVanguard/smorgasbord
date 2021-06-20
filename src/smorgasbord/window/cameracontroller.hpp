@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_CAMERACONTROLLER_HPP
-#define SMORGASBORD_CAMERACONTROLLER_HPP
+#pragma once
 
 #include <smorgasbord/rendering/camera.hpp>
 
@@ -38,5 +37,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_CAMERACONTROLLER_HPP

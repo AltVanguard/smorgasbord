@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_SCENEGRAPH_HPP
-#define SMORGASBORD_SCENEGRAPH_HPP
+#pragma once
 
 #include "transform.hpp"
 
@@ -233,5 +232,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_SCENEGRAPH_HPP

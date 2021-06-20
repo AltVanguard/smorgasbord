@@ -1,5 +1,4 @@
-#ifndef SCOPE_HPP
-#define SCOPE_HPP
+#pragma once
 
 #include <memory>
 #include <functional>
@@ -122,5 +121,3 @@ public:
 #define Scope(target, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__);
 #define ScopeAlias(target, alias, ...) std::unique_ptr<IScope> SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__) = (target)->GetScope(__VA_ARGS__); auto &alias = target;
 #define ScopeExit(onExit) OnExitScope SMORGASBORD_CREATEIDENTIFIER(__scope_, __LINE__)(onExit);
-
-#endif // SCOPE_HPP

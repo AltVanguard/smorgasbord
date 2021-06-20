@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_IMAGE_HPP
-#define SMORGASBORD_IMAGE_HPP
+#pragma once
 
 #include <glm/glm.hpp>
 
@@ -58,5 +57,3 @@ public:
 };
 
 }
-
-#endif // SMORGASBORD_IMAGE_HPP

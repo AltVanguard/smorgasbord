@@ -1,5 +1,4 @@
-#ifndef SMORGASBORD_GL4_BACKEND_H
-#define SMORGASBORD_GL4_BACKEND_H
+#pragma once
 
 #include <smorgasbord/gpu/gpuapi.hpp>
 #include <smorgasbord/gpu/gl4_loader.hpp>
@@ -341,5 +340,3 @@ class GL4Backend : public Backend
 };
 
 }
-
-#endif // SMORGASBORD_GL4_BACKEND_H
