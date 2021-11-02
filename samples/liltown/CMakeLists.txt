@@ -1,3 +1,2 @@
-cmake_minimum_required(VERSION 3.8)
-project(liltown)
+cmake_minimum_required(VERSION 3.12)
 include(liltown.cmake)

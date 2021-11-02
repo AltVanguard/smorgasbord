@@ -1,7 +1,10 @@
-/lib/*
-/bin/*
+lib
+bin
+.vs
+out
 build**/
 *.pro.user
 *.pro.user.*
 *.txt.user
 *.txt.user.*
+CMakeSettings.json
